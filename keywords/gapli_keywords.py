@@ -33,13 +33,15 @@ def process_store_products(page, store_name, wholesalers_file, config):
 
     if not wholesalers:
         logging.error("No wholesalers to process.")
-        return
+        return "No Wholesalers"
 
+    logging.info(f"Selecting store: {store_name}")
     if not automation.select_store(store_name):
-        return
+        return "Failed Store Selection"
 
+    logging.info("Navigating to marketplace...")
     if not automation.navigate_to_marketplace():
-        return
+        return "Failed Marketplace Navigation"
 
     automation.set_basic_filters(config['min_price_filter'], config['min_stock'])
 

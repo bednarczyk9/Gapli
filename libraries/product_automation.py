@@ -54,87 +54,109 @@ class ProductAutomation:
     def navigate_to_marketplace(self):
         """Navigates to the marketplace (all products) page."""
         def _action():
-            if "/dashboard/marketplace" in self.page.url:
+            self.logger.info(f"Current URL: {self.page.url}")
+            if "/dashboard/products" in self.page.url or "/dashboard/marketplace" in self.page.url:
+                self.set_zoom(50)
                 return True
                 
+            # Try to find 'Produkty' link
             produkty_link = self.page.get_by_role("link", name="Produkty", exact=True)
             if not produkty_link.is_visible():
+                self.logger.info("Sidebar 'Produkty' not visible, checking if sidebar is collapsed or needs 'Twoje sklepy' click.")
                 twoje_sklepy_btn = self.page.get_by_role("button", name="Twoje sklepy")
-                if not twoje_sklepy_btn.is_visible():
-                    twoje_sklepy_btn = self.page.locator("button:has-text('Twoje sklepy')")
-                twoje_sklepy_btn.click(force=True)
-                time.sleep(0.5)
+                if twoje_sklepy_btn.is_visible():
+                    twoje_sklepy_btn.click(force=True)
+                    time.sleep(1)
             
-            produkty_link.click(force=True)
-            self.page.wait_for_load_state("networkidle")
+            if produkty_link.is_visible():
+                produkty_link.click(force=True)
+                self.page.wait_for_load_state("load")
+                time.sleep(1)
 
+            # Look for 'Wszystkie dostępne produkty'
             all_products_btn = self.page.get_by_role("button", name="Wszystkie dostępne produkty").first
             if not all_products_btn.is_visible():
                 all_products_btn = self.page.locator("button:has-text('Wszystkie dostępne produkty')").first
             
-            all_products_btn.click(force=True)
-            self.page.wait_for_load_state("networkidle")
-            time.sleep(1)
+            if all_products_btn.is_visible():
+                all_products_btn.click(force=True)
+                self.page.wait_for_load_state("load")
+                time.sleep(2)
             
             # Re-apply zoom after navigation
-            if "/dashboard/marketplace" in self.page.url:
+            if "/dashboard/products" in self.page.url or "/dashboard/marketplace" in self.page.url:
                 self.set_zoom(50)
                 return True
+            
+            self.logger.warning(f"Failed to reach marketplace. Current URL: {self.page.url}")
             return False
 
-        return self.retry_action(_action)
+        result = self.retry_action(_action)
+        if not result:
+            self.page.screenshot(path="navigation_error_debug.png")
+        return result
 
     def set_basic_filters(self, min_price, min_stock):
         """Sets basic filters: wholesale price and stock level."""
         self.logger.info(f"Setting filters: min price={min_price}, min stock={min_stock}")
-        self.page.locator("label:has-text('Cena hurtowa (PLN)')").locator("xpath=..").locator(
-            "input[placeholder='Od']").first.fill(str(min_price))
-        self.page.locator("label:has-text('Ilość w magazynie')").locator("xpath=..").locator(
-            "input[placeholder='Od']").first.fill(str(min_stock))
+        try:
+            price_input = self.page.locator("label:has-text('Cena hurtowa (PLN)')").locator("xpath=..").locator("input[placeholder='Od']").first
+            price_input.fill(str(min_price))
+            
+            stock_input = self.page.locator("label:has-text('Ilość w magazynie')").locator("xpath=..").locator("input[placeholder='Od']").first
+            stock_input.fill(str(min_stock))
 
-        hide_blocked = self.page.get_by_text("Ukrywa produkty zablokowane do wysyłki na Allegro")
-        if hide_blocked.first.is_visible():
-            hide_blocked.first.click(force=True)
+            hide_blocked = self.page.get_by_text("Ukrywa produkty zablokowane do wysyłki na Allegro")
+            if hide_blocked.first.is_visible():
+                hide_blocked.first.click(force=True)
+                self.logger.info("Checked 'Hide blocked products'.")
 
-        # Set 1000 items per page
-        per_page_select = self.page.locator("select").filter(
-            has=self.page.locator("option[value='1000']")).first
-        if per_page_select.is_visible():
-            current_per_page = per_page_select.evaluate("node => node.value")
-            if current_per_page != "1000":
-                per_page_select.select_option("1000")
-                self.page.wait_for_load_state("networkidle")
-                time.sleep(2)
+            # Set 1000 items per page
+            per_page_select = self.page.locator("select").filter(
+                has=self.page.locator("option[value='1000']")).first
+            if per_page_select.is_visible():
+                current_per_page = per_page_select.evaluate("node => node.value")
+                if current_per_page != "1000":
+                    per_page_select.select_option("1000")
+                    self.logger.info("Set 1000 items per page.")
+                    self.page.wait_for_load_state("networkidle")
+                    time.sleep(2)
+        except Exception as e:
+            self.logger.error(f"Error setting basic filters: {e}")
 
     def select_wholesaler(self, wholesaler):
         """Selects a wholesaler from the filter dropdown."""
+        self.logger.info(f"Attempting to select wholesaler: {wholesaler}")
         def _action():
             wholesaler_selector = self.page.locator("label:has-text('Hurtownia')").locator("xpath=..")
             wholesaler_btn = wholesaler_selector.locator("button").first
             if not wholesaler_btn.is_visible():
+                self.logger.warning("Wholesaler selection button not visible.")
                 return False
             
-            search_input = self.page.locator("input[placeholder='Szukaj opcji...']")
-            if not search_input.is_visible():
-                wholesaler_btn.click(force=True)
-                time.sleep(1)
+            wholesaler_btn.click(force=True)
+            time.sleep(1)
             
+            search_input = self.page.locator("input[placeholder='Szukaj opcji...']")
             if search_input.is_visible():
                 search_input.fill(wholesaler)
                 time.sleep(1.5)
                 option_btn = self.page.locator("div.overflow-y-auto button").filter(
                     has_text=re.compile(f"^{re.escape(wholesaler)}", re.I))
+                
                 if option_btn.count() > 0:
+                    self.logger.info(f"Found wholesaler option: {wholesaler}. Clicking...")
                     option_btn.first.click(force=True)
                     return True
                 else:
+                    self.logger.warning(f"Wholesaler {wholesaler} not found in list. Pressing Enter as fallback.")
                     self.page.keyboard.press("Enter")
                     return True
             return False
 
         if self.retry_action(_action):
             self.page.wait_for_load_state("networkidle")
-            time.sleep(5)
+            time.sleep(3)
             return True
         return False
 
@@ -142,7 +164,7 @@ class ProductAutomation:
         """Attempts to determine the total number of pages."""
         max_pages = 1
         try:
-            stats_text = self.page.locator("text=/Pokazuje \d+-\d+ z \d+/").filter(
+            stats_text = self.page.locator(r"text=/Pokazuje \d+-\d+ z \d+/").filter(
                 visible=True).first.inner_text()
             match = re.search(r'z (\d+)', stats_text)
             if match:

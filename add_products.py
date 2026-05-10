@@ -38,7 +38,8 @@ def main():
     try:
         for store_name in STORES:
             logging.info(f"Starting process for store: {store_name}")
-            process_store_products(page, store_name, WHOLESALERS_FILE, CONFIG)
+            result = process_store_products(page, store_name, WHOLESALERS_FILE, CONFIG)
+            logging.info(f"Finished process for store: {store_name} with result: {result}")
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
     finally:
