@@ -135,7 +135,7 @@ def run_automation():
 
                     retry_action(select_wholesaler)
                     page.wait_for_load_state("networkidle")
-                    time.sleep(3)
+                    time.sleep(4)
 
                     # Ustawienie liczby produktów na stronę na 1000
                     per_page_select = page.locator("select").filter(has=page.locator("option[value='1000']")).first
@@ -250,22 +250,6 @@ def run_automation():
                         else:
                             print("BŁĄD: Nie udało się przejść do formularza wysyłki.")
                             break
-                        if marketplace_selected or page.locator("label:has-text('Cena minimalna')").is_visible():
-                            page.locator("label:has-text('Cena minimalna')").locator("xpath=..").locator("input").fill(CENA_MINIMALNA)
-                            
-                            submit_btn = page.get_by_role("button", name=re.compile("Wyślij na Allegro", re.I))
-                            if not submit_btn.is_visible():
-                                submit_btn = page.locator('button').filter(has_text=re.compile("Wyślij na Allegro", re.I))
-                            
-                            if submit_btn.is_visible():
-                                submit_btn.click(force=True)
-                                print(f"✅ Wysłano stronę {current_page}/{total_pages}")
-                                page.wait_for_load_state("networkidle")
-                                time.sleep(2)
-                            else:
-                                print("BŁĄD: Nie znaleziono przycisku finalnego wysyłki.")
-                        else:
-                            print("BŁĄD: Nie udało się przejść do formularza wysyłki.")
 
         except Exception as e:
             print(f"\nBŁĄD: {e}")
