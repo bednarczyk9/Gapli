@@ -10,6 +10,7 @@ WHOLESALERS_XLSX = "Recorded/hurtownie_allegro.xlsx"
 CENA_HURTOWA_OD = "200"
 ILOSC_W_MAGAZYNIE = "2"
 CENA_MINIMALNA = "200"
+CENA_MAKSYMALNA = "50000"
 
 def retry_action(action_func, retries=3, delay=2):
     """Pomocnicza funkcja do ponawiania prób w razie błędów UI."""
@@ -251,6 +252,11 @@ def run_automation():
                         # 5. Wypełnianie ceny i finalna wysyłka
                         if marketplace_selected or page.locator("label:has-text('Cena minimalna')").is_visible():
                             page.locator("label:has-text('Cena minimalna')").locator("xpath=..").locator("input").fill(CENA_MINIMALNA)
+                            
+                            # Wypełnianie ceny maksymalnej
+                            max_price_label = page.locator("label:has-text('Cena maksymalna (PLN)')")
+                            if max_price_label.is_visible():
+                                max_price_label.locator("xpath=..").locator("input").fill(CENA_MAKSYMALNA)
                             
                             submit_btn = page.get_by_role("button", name=re.compile("Wyślij na Allegro", re.I))
                             if not submit_btn.is_visible():
