@@ -5,8 +5,7 @@ import openpyxl
 from playwright.sync_api import sync_playwright
 
 # Konfiguracja
-STORES = ["hit_bazar"]
-# STORES = ["hit_bazar", "radosnydzieciak", "skarbiec_ofert"]
+STORES = ["hit_bazar", "radosnydzieciak", "skarbiec_ofert"]
 WHOLESALERS_XLSX = "Recorded/hurtownie_allegro.xlsx"
 CENA_HURTOWA_OD = "200"
 ILOSC_W_MAGAZYNIE = "2"
@@ -136,7 +135,7 @@ def run_automation():
 
                     retry_action(select_wholesaler)
                     page.wait_for_load_state("networkidle")
-                    time.sleep(1)
+                    time.sleep(3)
 
                     # Ustawienie liczby produktów na stronę na 1000
                     per_page_select = page.locator("select").filter(has=page.locator("option[value='1000']")).first
@@ -147,45 +146,51 @@ def run_automation():
                             page.wait_for_load_state("networkidle")
                             time.sleep(2)
 
-                    # OBSŁUGA PAGINACJI
-                    pagination_input = page.locator("input[title*='Wpisz numer strony']").first
-                    total_pages = 1
-                    if pagination_input.is_visible():
-                        title_text = pagination_input.get_attribute("title")
-                        match = re.search(r'\(1-\{(\d+)\}\)', title_text) or re.search(r'\(1-(\d+)\)', title_text)
-                        if match:
-                            total_pages = int(match.group(1))
+                    # DYNAMICZNA OBSŁUGA PAGINACJI
+                    print("Rozpoczynam dynamiczne przetwarzanie stron...")
+                    
+                    processed_pages = 0
+                    max_safety_limit = 500 # Zabezpieczenie przed pętlą nieskończoną
+                    
+                    while processed_pages < max_safety_limit:
+                        # 1. Sprawdzenie aktualnej strony i sumy stron
+                        pagination_input = page.locator("input[title*='Wpisz numer strony']").first
+                        total_pages = 1
+                        current_page_num = processed_pages + 1
+                        
+                        if pagination_input.is_visible():
+                            title_text = pagination_input.get_attribute("title") or ""
+                            # Próba wyciągnięcia liczby stron z formatu (1-{8}) lub (1-8)
+                            match = re.search(r'\(1-\{(\d+)\}\)', title_text) or re.search(r'\(1-(\d+)\)', title_text)
+                            if match:
+                                total_pages = int(match.group(1))
+                            
+                            # Pobranie aktualnego numeru strony z wartości inputa (jeśli strona sama się przełączyła)
+                            val = pagination_input.get_attribute("value")
+                            if val and val.isdigit():
+                                current_page_num = int(val)
 
-                    print(f"Znaleziono stron do przetworzenia: {total_pages}")
+                        print(f"Przetwarzanie strony {current_page_num} z {total_pages} (Łącznie przetworzono: {processed_pages})")
 
-                    for current_page in range(1, total_pages + 1):
-                        marketplace_selected = False
-                        if current_page > 1:
-                            print(f"Przechodzenie do strony {current_page}...")
-                            pagination_input.fill(str(current_page))
-                            page.keyboard.press("Enter")
-                            page.wait_for_load_state("networkidle")
-                            time.sleep(2)
-
-
+                        # 2. Zaznaczanie produktów na obecnej stronie
                         select_all = page.get_by_role("checkbox", name="Zaznacz wszystkie na tej stronie")
                         if not select_all.is_visible():
-                            print(f"Brak produktów na stronie {current_page}.")
+                            print(f"Koniec produktów dla hurtowni {wholesaler}.")
                             break
-
-                        # ZAZNACZANIE PRODUKTÓW
+                        
                         select_all.check(force=True)
                         time.sleep(0.5)
                                         
-                        # Przycisk "Wyślij zaznaczone produkty"
+                        # 3. Proces wysyłki
+                        marketplace_selected = False
                         send_btn = page.get_by_role("button", name="Wyślij zaznaczone produkty")
+                        
                         if send_btn.is_visible() and send_btn.is_enabled():
                             send_btn.click(force=True)
                             time.sleep(1.5)
                             
                             def select_marketplace_and_account():
                                 nonlocal marketplace_selected
-                                # 1. Miejsce wysyłki
                                 container = page.locator("div").filter(has_text=re.compile("Wybierz miejsce wysyłki produktów", re.I)).filter(has=page.locator("button")).last
                                 if container.count() == 0: return False
                                 
@@ -203,7 +208,6 @@ def run_automation():
                                 else:
                                     return False
 
-                                # 2. Konto Allegro
                                 acc_container = page.locator("div").filter(has_text=re.compile("Wybierz konto Allegro", re.I)).filter(has=page.locator("button")).last
                                 if acc_container.count() > 0:
                                     acc_dropdown = acc_container.locator("button").first
@@ -220,9 +224,32 @@ def run_automation():
                                 return False
 
                             if not retry_action(select_marketplace_and_account, retries=3):
-                                print(f"BŁĄD: Nie udało się wybrać marketplace lub konta na stronie {current_page}")
+                                print(f"BŁĄD: Nie udało się wybrać marketplace/konta na stronie {current_page_num}")
 
-                        # 3. DALSZA CZĘŚĆ PROCESU (WYPEŁNIANIE CENY I WYSYŁKA)
+                        # 4. Wypełnianie ceny i finalna wysyłka
+                        if marketplace_selected or page.locator("label:has-text('Cena minimalna')").is_visible():
+                            page.locator("label:has-text('Cena minimalna')").locator("xpath=..").locator("input").fill(CENA_MINIMALNA)
+                            
+                            submit_btn = page.get_by_role("button", name=re.compile("Wyślij na Allegro", re.I))
+                            if not submit_btn.is_visible():
+                                submit_btn = page.locator('button').filter(has_text=re.compile("Wyślij na Allegro", re.I))
+                            
+                            if submit_btn.is_visible():
+                                submit_btn.click(force=True)
+                                print(f"✅ Wysłano stronę {current_page_num}/{total_pages}")
+                                page.wait_for_load_state("networkidle")
+                                time.sleep(3) # Dłuższy czas na przeładowanie i auto-przejście
+                                processed_pages += 1
+                                
+                                if current_page_num >= total_pages:
+                                    print(f"Osiągnięto ostatnią stronę ({total_pages}).")
+                                    break
+                            else:
+                                print("BŁĄD: Nie znaleziono przycisku finalnego wysyłki.")
+                                break
+                        else:
+                            print("BŁĄD: Nie udało się przejść do formularza wysyłki.")
+                            break
                         if marketplace_selected or page.locator("label:has-text('Cena minimalna')").is_visible():
                             page.locator("label:has-text('Cena minimalna')").locator("xpath=..").locator("input").fill(CENA_MINIMALNA)
                             
