@@ -1,0 +1,44 @@
+[
+    {
+        "tag": "BUTTON",
+        "text": "🇵🇱\nPL",
+        "selector": "text=\"🇵🇱\nPL\"",
+        "type": "submit"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "#username",
+        "type": "text"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "#password",
+        "type": "password"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "#remember-me",
+        "type": "checkbox"
+    },
+    {
+        "tag": "A",
+        "text": "Zapomniałeś hasła?",
+        "selector": "text=\"Zapomniałeś hasła?\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Zaloguj się",
+        "selector": "text=\"Zaloguj się\"",
+        "type": "submit"
+    },
+    {
+        "tag": "A",
+        "text": "Zarejestruj się",
+        "selector": "text=\"Zarejestruj się\"",
+        "type": "link/other"
+    }
+]

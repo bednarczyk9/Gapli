@@ -1,0 +1,3 @@
+// Wygenerowane selektory dla strony: https://gapli.com/login\nconst PAGE_ELEMENTS = {\n    pl: 'text="🇵🇱
+PL"', // BUTTON - 🇵🇱
+PL\n    input1: '#username', // INPUT - \n    input2: '#password', // INPUT - \n    input3: '#remember-me', // INPUT - \n    zapomniałeśhasła: 'text="Zapomniałeś hasła?"', // A - Zapomniałeś hasła?\n    zalogujsię: 'text="Zaloguj się"', // BUTTON - Zaloguj się\n    zarejestrujsię: 'text="Zarejestruj się"', // A - Zarejestruj się\n};\n
