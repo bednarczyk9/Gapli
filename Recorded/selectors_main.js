@@ -1,0 +1,24 @@
+// Wygenerowane selektory dla strony: https://gapli.com/dashboard/products\nconst PAGE_ELEMENTS = {\n    gaplidropshipping: 'text="Gapli
+Dropshipping"', // A - Gapli
+Dropshipping\n    button1: '[aria-label="Zwiń sidebar"]', // BUTTON - \n    skarbiecofert: 'text="skarbiec_ofert"', // BUTTON - skarbiec_ofert\n    storelimit46: 'text="Store Limit
+4 / 6"', // BUTTON - Store Limit
+4 / 6\n    button4: '[aria-label="Powiadomienia"]', // BUTTON - \n    button5: '[aria-label="Zmień motyw"]', // BUTTON - \n    pl: 'text="🇵🇱
+PL"', // BUTTON - 🇵🇱
+PL\n    mariabednarczykmariaacwiklagmailcom: 'text="Maria Bednarczyk
+mariaacwikla@gmail.com
+MB"', // BUTTON - Maria Bednarczyk
+mariaacwikla@gmail.com
+\n    dashboard: 'text="Dashboard"', // A - Dashboard\n    portfelelektroniczny: 'text="Portfel elektroniczny"', // A - Portfel elektroniczny\n    zamówienia: 'text="Zamówienia"', // A - Zamówienia\n    creatorprogram: 'text="Creator Program"', // A - Creator Program\n    twojesklepy: 'text="Twoje sklepy"', // BUTTON - Twoje sklepy\n    produkty: 'text="Produkty"', // A - Produkty\n    listasklepów: 'text="Lista sklepów"', // A - Lista sklepów\n    kategoriesklepu: 'text="Kategorie sklepu"', // A - Kategorie sklepu\n    suppliertrust: 'text="SupplierTrust™"', // A - SupplierTrust™\n    giełdasklepów: 'text="Giełda Sklepów"', // A - Giełda Sklepów\n    cartrecoveryanalytics: 'text="Cart Recovery Analytics"', // A - Cart Recovery Analytics\n    allegro: 'text="Allegro"', // BUTTON - Allegro\n    erli: 'text="Erli"', // BUTTON - Erli\n    empikplace: 'text="EmpikPlace"', // BUTTON - EmpikPlace\n    emag: 'text="eMAG"', // BUTTON - eMAG\n    kaufland: 'text="Kaufland"', // BUTTON - Kaufland\n    produktyonepage: 'text="Produkty One Page"', // A - Produkty One Page\n    marketplace: 'text="Marketplace"', // A - Marketplace\n    subskrypcje: 'text="Subskrypcje"', // A - Subskrypcje\n    programpartnerski: 'text="Program partnerski"', // BUTTON - Program partnerski\n    umowywspółpracy: 'text="Umowy współpracy"', // A - Umowy współpracy\n    statystyki: 'text="Statystyki"', // A - Statystyki\n    zgłośproblemtickety: 'text="Zgłoś problem (TICKETY)"', // A - Zgłoś problem (TICKETY)\n    aktualizacjegaplicom: 'text="Aktualizacje Gapli.com"', // A - Aktualizacje Gapli.com\n    integracje: 'text="Integracje"', // A - Integracje\n    wiadomości: 'text="Wiadomości"', // A - Wiadomości\n    wirtualnymagazyn: 'text="Wirtualny Magazyn"', // A - Wirtualny Magazyn\n    personalizacjaproduktów: 'text="Personalizacja produktów"', // A - Personalizacja produktów\n    bdoopakowania: 'text="BDO & Opakowania"', // A - BDO & Opakowania\n    a37: 'a.social-link-btn.flex-1', // A - \n    polskapln158: 'text="Polska
+(PLN)
+158"', // BUTTON - Polska
+(PLN)
+158\n    wszystkiedostępneproduktyprzeglądaji: 'button.flex-1.flex', // BUTTON - Wszystkie dostępne produkty
+Przeglądaj i\n    branżahurtowni: 'text="Branża hurtowni"', // BUTTON - Branża hurtowni\n    ampsource8036nastanie: 'text="AmpSource (8036 na stanie)"', // BUTTON - AmpSource (8036 na stanie)\n    button42: 'button.p-1.rounded-full', // BUTTON - \n    typproduktu: 'text="Typ produktu"', // BUTTON - Typ produktu\n    input44: 'input.sr-only.peer', // INPUT - \n    input45: '[placeholder="Od"]', // INPUT - \n    button46: 'button.absolute.inset-y-0', // BUTTON - \n    input47: '[placeholder="Do"]', // INPUT - \n    input48: '[placeholder="Wpisz nazwę produktu lub fragment nazwy..."]', // INPUT - \n    input49: '[placeholder="Wpisz SKU produktu..."]', // INPUT - \n    input50: '[placeholder="Wpisz kod EAN/GTIN..."]', // INPUT - \n    input51: '[placeholder="Wpisz nazwę producenta..."]', // INPUT - \n    input52: '[placeholder="Wpisz kod producenta..."]', // INPUT - \n    button53: 'button.absolute.top-1/2', // BUTTON - \n    platformaźródło: 'text="Platforma / Źródło"', // BUTTON - Platforma / Źródło\n    button55: 'button.ml-2.p-1', // BUTTON - \n    wyczyśćwszystkie: 'text="Wyczyść wszystkie"', // BUTTON - Wyczyść wszystkie\n    pierwsza: 'text="Pierwsza"', // BUTTON - Pierwsza\n    poprzednia: 'text="Poprzednia"', // BUTTON - Poprzednia\n    1: 'text="1"', // BUTTON - 1\n    2: 'text="2"', // BUTTON - 2\n    3: 'text="3"', // BUTTON - 3\n    4: 'text="4"', // BUTTON - 4\n    5: 'text="5"', // BUTTON - 5\n    6: 'text="6"', // BUTTON - 6\n    następna: 'text="Następna"', // BUTTON - Następna\n    input66: '[placeholder="1-52"]', // INPUT - \n    button67: 'button.px-2.py-[7px]', // BUTTON - \n    501002505001000: 'text="50
+100
+250
+500
+1000"', // SELECT - 50
+100
+250
+500
+1000\n    input69: 'input.h-4.w-4', // INPUT - \n    input70: 'input.mt-1.h-4', // INPUT - \n    szczegółyproduktu: 'text="Szczegóły produktu"', // BUTTON - Szczegóły produktu\n    szczegółyceny: 'text="Szczegóły ceny"', // BUTTON - Szczegóły ceny\n    button73: 'button.main-chat-button.relative', // BUTTON - \n};\n

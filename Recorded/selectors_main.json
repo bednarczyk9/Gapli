@@ -1,0 +1,446 @@
+[
+    {
+        "tag": "A",
+        "text": "Gapli\nDropshipping",
+        "selector": "text=\"Gapli\nDropshipping\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "",
+        "selector": "[aria-label=\"Zwiń sidebar\"]",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "skarbiec_ofert",
+        "selector": "text=\"skarbiec_ofert\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Store Limit\n4 / 6",
+        "selector": "text=\"Store Limit\n4 / 6\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "",
+        "selector": "[aria-label=\"Powiadomienia\"]",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "",
+        "selector": "[aria-label=\"Zmień motyw\"]",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "🇵🇱\nPL",
+        "selector": "text=\"🇵🇱\nPL\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Maria Bednarczyk\nmariaacwikla@gmail.com\n",
+        "selector": "text=\"Maria Bednarczyk\nmariaacwikla@gmail.com\nMB\"",
+        "type": "submit"
+    },
+    {
+        "tag": "A",
+        "text": "Dashboard",
+        "selector": "text=\"Dashboard\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Portfel elektroniczny",
+        "selector": "text=\"Portfel elektroniczny\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Zamówienia",
+        "selector": "text=\"Zamówienia\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Creator Program",
+        "selector": "text=\"Creator Program\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Twoje sklepy",
+        "selector": "text=\"Twoje sklepy\"",
+        "type": "submit"
+    },
+    {
+        "tag": "A",
+        "text": "Produkty",
+        "selector": "text=\"Produkty\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Lista sklepów",
+        "selector": "text=\"Lista sklepów\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Kategorie sklepu",
+        "selector": "text=\"Kategorie sklepu\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "SupplierTrust™",
+        "selector": "text=\"SupplierTrust™\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Giełda Sklepów",
+        "selector": "text=\"Giełda Sklepów\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Cart Recovery Analytics",
+        "selector": "text=\"Cart Recovery Analytics\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Allegro",
+        "selector": "text=\"Allegro\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Erli",
+        "selector": "text=\"Erli\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "EmpikPlace",
+        "selector": "text=\"EmpikPlace\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "eMAG",
+        "selector": "text=\"eMAG\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Kaufland",
+        "selector": "text=\"Kaufland\"",
+        "type": "submit"
+    },
+    {
+        "tag": "A",
+        "text": "Produkty One Page",
+        "selector": "text=\"Produkty One Page\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Marketplace",
+        "selector": "text=\"Marketplace\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Subskrypcje",
+        "selector": "text=\"Subskrypcje\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Program partnerski",
+        "selector": "text=\"Program partnerski\"",
+        "type": "submit"
+    },
+    {
+        "tag": "A",
+        "text": "Umowy współpracy",
+        "selector": "text=\"Umowy współpracy\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Statystyki",
+        "selector": "text=\"Statystyki\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Zgłoś problem (TICKETY)",
+        "selector": "text=\"Zgłoś problem (TICKETY)\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Aktualizacje Gapli.com",
+        "selector": "text=\"Aktualizacje Gapli.com\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Integracje",
+        "selector": "text=\"Integracje\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Wiadomości",
+        "selector": "text=\"Wiadomości\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Wirtualny Magazyn",
+        "selector": "text=\"Wirtualny Magazyn\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "Personalizacja produktów",
+        "selector": "text=\"Personalizacja produktów\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "BDO & Opakowania",
+        "selector": "text=\"BDO & Opakowania\"",
+        "type": "link/other"
+    },
+    {
+        "tag": "A",
+        "text": "",
+        "selector": "a.social-link-btn.flex-1",
+        "type": "link/other"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Polska\n(PLN)\n158",
+        "selector": "text=\"Polska\n(PLN)\n158\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Wszystkie dostępne produkty\nPrzeglądaj i",
+        "selector": "button.flex-1.flex",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Branża hurtowni",
+        "selector": "text=\"Branża hurtowni\"",
+        "type": "button"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "AmpSource (8036 na stanie)",
+        "selector": "text=\"AmpSource (8036 na stanie)\"",
+        "type": "button"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "",
+        "selector": "button.p-1.rounded-full",
+        "type": "button"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Typ produktu",
+        "selector": "text=\"Typ produktu\"",
+        "type": "button"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "input.sr-only.peer",
+        "type": "checkbox"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "[placeholder=\"Od\"]",
+        "type": "number"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "",
+        "selector": "button.absolute.inset-y-0",
+        "type": "submit"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "[placeholder=\"Do\"]",
+        "type": "number"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "[placeholder=\"Wpisz nazwę produktu lub fragment nazwy...\"]",
+        "type": "text"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "[placeholder=\"Wpisz SKU produktu...\"]",
+        "type": "text"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "[placeholder=\"Wpisz kod EAN/GTIN...\"]",
+        "type": "text"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "[placeholder=\"Wpisz nazwę producenta...\"]",
+        "type": "text"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "[placeholder=\"Wpisz kod producenta...\"]",
+        "type": "text"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "",
+        "selector": "button.absolute.top-1/2",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Platforma / Źródło",
+        "selector": "text=\"Platforma / Źródło\"",
+        "type": "button"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "",
+        "selector": "button.ml-2.p-1",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Wyczyść wszystkie",
+        "selector": "text=\"Wyczyść wszystkie\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Pierwsza",
+        "selector": "text=\"Pierwsza\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Poprzednia",
+        "selector": "text=\"Poprzednia\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "1",
+        "selector": "text=\"1\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "2",
+        "selector": "text=\"2\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "3",
+        "selector": "text=\"3\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "4",
+        "selector": "text=\"4\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "5",
+        "selector": "text=\"5\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "6",
+        "selector": "text=\"6\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Następna",
+        "selector": "text=\"Następna\"",
+        "type": "submit"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "[placeholder=\"1-52\"]",
+        "type": "number"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "",
+        "selector": "button.px-2.py-[7px]",
+        "type": "submit"
+    },
+    {
+        "tag": "SELECT",
+        "text": "50\n100\n250\n500\n1000",
+        "selector": "text=\"50\n100\n250\n500\n1000\"",
+        "type": "select-one"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "input.h-4.w-4",
+        "type": "checkbox"
+    },
+    {
+        "tag": "INPUT",
+        "text": "",
+        "selector": "input.mt-1.h-4",
+        "type": "checkbox"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Szczegóły produktu",
+        "selector": "text=\"Szczegóły produktu\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "Szczegóły ceny",
+        "selector": "text=\"Szczegóły ceny\"",
+        "type": "submit"
+    },
+    {
+        "tag": "BUTTON",
+        "text": "",
+        "selector": "button.main-chat-button.relative",
+        "type": "submit"
+    }
+]
