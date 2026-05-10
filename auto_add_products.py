@@ -10,7 +10,7 @@ WHOLESALERS_XLSX = "Recorded/hurtownie_allegro.xlsx"
 CENA_HURTOWA_OD = "200"
 ILOSC_W_MAGAZYNIE = "2"
 CENA_MINIMALNA = "200"
-CENA_MAKSYMALNA = "50000"
+CENA_MAKSYMALNA = "44000"
 
 def retry_action(action_func, retries=3, delay=2):
     """Pomocnicza funkcja do ponawiania prób w razie błędów UI."""
