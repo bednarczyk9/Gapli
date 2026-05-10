@@ -46,7 +46,6 @@ def run_automation():
                 print(f"Otwieram menu wyboru sklepu...")
                 
                 def select_store():
-                    # Szukamy przycisku po aria-label lub tekście
                     store_selector_btn = page.locator('button[aria-label="Wybór sklepu"]')
                     if not store_selector_btn.is_visible():
                         store_selector_btn = page.get_by_role("button", name="Wybór sklepu")
@@ -106,10 +105,22 @@ def run_automation():
                 if hide_blocked.first.is_visible():
                     hide_blocked.first.click(force=True)
                     print("Zaznaczono: Ukryj produkty zablokowane")
+                
+                # Ustawienie liczby produktów na stronę na 1000
+                per_page_select = page.locator("select").filter(has=page.locator("option[value='1000']")).first
+                if per_page_select.is_visible():
+                    current_per_page = per_page_select.evaluate("node => node.value")
+                    if current_per_page != "1000":
+                        per_page_select.select_option("1000")
+                        page.wait_for_load_state("networkidle")
+                        time.sleep(2)
 
                 # 4. Pętla dla każdej hurtowni
                 for wholesaler in wholesalers:
                     print(f"\nPrzetwarzanie hurtowni: {wholesaler}")
+                    
+                    # RESET LICZNIKA STRON DLA NOWEJ HURTOWNI
+                    current_wholesaler_max_pages = 1
                     
                     def select_wholesaler():
                         wholesaler_selector = page.locator("label:has-text('Hurtownia')").locator("xpath=..")
@@ -123,7 +134,7 @@ def run_automation():
                         
                         if search_input.is_visible():
                             search_input.fill(wholesaler)
-                            time.sleep(1)
+                            time.sleep(1.5)
                             option_btn = page.locator("div.overflow-y-auto button").filter(has_text=re.compile(f"^{re.escape(wholesaler)}", re.I))
                             if option_btn.count() > 0:
                                 option_btn.first.click(force=True)
@@ -135,53 +146,64 @@ def run_automation():
 
                     retry_action(select_wholesaler)
                     page.wait_for_load_state("networkidle")
-                    time.sleep(4)
-
-                    # Ustawienie liczby produktów na stronę na 1000
-                    per_page_select = page.locator("select").filter(has=page.locator("option[value='1000']")).first
-                    if per_page_select.is_visible():
-                        current_per_page = per_page_select.evaluate("node => node.value")
-                        if current_per_page != "1000":
-                            per_page_select.select_option("1000")
-                            page.wait_for_load_state("networkidle")
-                            time.sleep(2)
+                    time.sleep(5) # WAŻNE: czas na odświeżenie danych produktów
 
                     # DYNAMICZNA OBSŁUGA PAGINACJI
                     print("Rozpoczynam dynamiczne przetwarzanie stron...")
                     
                     processed_pages = 0
-                    max_safety_limit = 500 # Zabezpieczenie przed pętlą nieskończoną
+                    max_safety_limit = 500
                     
                     while processed_pages < max_safety_limit:
-                        # 1. Sprawdzenie aktualnej strony i sumy stron
-                        pagination_input = page.locator("input[title*='Wpisz numer strony']").first
-                        total_pages = 1
-                        current_page_num = processed_pages + 1
+                        target_page = processed_pages + 1
                         
-                        if pagination_input.is_visible():
-                            title_text = pagination_input.get_attribute("title") or ""
-                            # Próba wyciągnięcia liczby stron z formatu (1-{8}) lub (1-8)
+                        # 1. Pobranie całkowitej liczby stron (tylko z WIDOCZNYCH elementów)
+                        # Resetujemy max_pages na podstawie aktualnie widocznych statystyk "Pokazuje X-Y z Z"
+                        try:
+                            stats_text = page.locator("text=/Pokazuje \d+-\d+ z \d+/").filter(visible=True).first.inner_text()
+                            match = re.search(r'z (\d+)', stats_text)
+                            if match:
+                                total_prods = int(match.group(1))
+                                # Obliczamy strony przy założeniu 1000 na stronę
+                                current_wholesaler_max_pages = (total_prods + 999) // 1000
+                        except: pass
+
+                        # Uzbrojenie w dane z inputa paginacji
+                        pagination_inputs = page.locator("input[title*='Wpisz numer strony']").filter(visible=True)
+                        for i in range(pagination_inputs.count()):
+                            title_text = pagination_inputs.nth(i).get_attribute("title") or ""
                             match = re.search(r'\(1-\{(\d+)\}\)', title_text) or re.search(r'\(1-(\d+)\)', title_text)
                             if match:
-                                total_pages = int(match.group(1))
-                            
-                            # Pobranie aktualnego numeru strony z wartości inputa (jeśli strona sama się przełączyła)
-                            val = pagination_input.get_attribute("value")
-                            if val and val.isdigit():
-                                current_page_num = int(val)
+                                current_wholesaler_max_pages = int(match.group(1))
 
-                        print(f"Przetwarzanie strony {current_page_num} z {total_pages} (Łącznie przetworzono: {processed_pages})")
+                        total_pages = current_wholesaler_max_pages
+                        current_page_num = target_page
 
-                        # 2. Zaznaczanie produktów na obecnej stronie
+                        # 2. Wymuszenie numeru strony (jeśli nie jesteśmy na właściwej)
+                        visible_input = pagination_inputs.first
+                        if visible_input.count() > 0:
+                            actual_val = visible_input.get_attribute("value")
+                            if actual_val != str(target_page):
+                                print(f"Wymuszam numer strony: {target_page}")
+                                visible_input.fill(str(target_page))
+                                page.keyboard.press("Enter")
+                                time.sleep(4)
+                                page.wait_for_load_state("networkidle")
+
+                        print(f"Przetwarzanie strony {target_page} z {total_pages} (Hurtownia: {wholesaler})")
+
+                        # 3. Zaznaczanie produktów
                         select_all = page.get_by_role("checkbox", name="Zaznacz wszystkie na tej stronie")
                         if not select_all.is_visible():
-                            print(f"Koniec produktów dla hurtowni {wholesaler}.")
-                            break
+                            time.sleep(3)
+                            if not select_all.is_visible():
+                                print(f"Brak produktów na stronie {target_page}. Koniec hurtowni.")
+                                break
                         
                         select_all.check(force=True)
                         time.sleep(0.5)
                                         
-                        # 3. Proces wysyłki
+                        # 4. Proces wysyłki
                         marketplace_selected = False
                         send_btn = page.get_by_role("button", name="Wyślij zaznaczone produkty")
                         
@@ -224,9 +246,9 @@ def run_automation():
                                 return False
 
                             if not retry_action(select_marketplace_and_account, retries=3):
-                                print(f"BŁĄD: Nie udało się wybrać marketplace/konta na stronie {current_page_num}")
+                                print(f"BŁĄD: Nie udało się wybrać marketplace/konta.")
 
-                        # 4. Wypełnianie ceny i finalna wysyłka
+                        # 5. Wypełnianie ceny i finalna wysyłka
                         if marketplace_selected or page.locator("label:has-text('Cena minimalna')").is_visible():
                             page.locator("label:has-text('Cena minimalna')").locator("xpath=..").locator("input").fill(CENA_MINIMALNA)
                             
@@ -236,12 +258,13 @@ def run_automation():
                             
                             if submit_btn.is_visible():
                                 submit_btn.click(force=True)
-                                print(f"✅ Wysłano stronę {current_page_num}/{total_pages}")
+                                print(f"✅ Wysłano stronę {target_page}/{total_pages}")
+                                
+                                time.sleep(5) 
                                 page.wait_for_load_state("networkidle")
-                                time.sleep(3) # Dłuższy czas na przeładowanie i auto-przejście
                                 processed_pages += 1
                                 
-                                if current_page_num >= total_pages:
+                                if target_page >= total_pages:
                                     print(f"Osiągnięto ostatnią stronę ({total_pages}).")
                                     break
                             else:
