@@ -5,8 +5,11 @@ import logging
 class ProductAutomation:
     """Class for automating product addition in Gapli."""
 
-    def __init__(self, page):
+    def __init__(self, page, client=None, username=None, password=None):
         self.page = page
+        self.client = client
+        self.username = username
+        self.password = password
         self.logger = logging.getLogger(__name__)
 
     def retry_action(self, action_func, retries=3, delay=2):
@@ -17,9 +20,60 @@ class ProductAutomation:
                     return True
             except Exception as e:
                 self.logger.warning(f"Attempt {i+1} failed: {e}")
+            
+            # Check for logout or session loss after each failure
+            if "login" in self.page.url or not self.page.locator("aside").is_visible():
+                self.logger.warning("Session lost or UI missing during action. Waiting for recovery...")
+                self.wait_for_ui_ready()
+                # After recovery, we should ideally retry the action again, potentially resetting retries
+                return self.retry_action(action_func, retries, delay)
+
             if i < retries - 1:
                 time.sleep(delay)
         return False
+
+    def wait_for_ui_ready(self):
+        """Waits indefinitely until the UI is ready (logged in and on marketplace)."""
+        self.logger.info("Entering wait loop for UI recovery. Please log in and navigate to the Marketplace.")
+        while True:
+            try:
+                # 1. Check if we can auto-login if error is visible or we are on login page
+                login_error = self.page.locator("div.text-red-300:has-text('Wystąpił błąd podczas logowania')")
+                if login_error.is_visible() or "login" in self.page.url:
+                    if self.client and self.username and self.password:
+                        self.logger.info("Login error detected or on login page. Attempting automatic login...")
+                        if self.client.login(self.username, self.password):
+                            self.logger.info("Automatic login successful. Navigating to marketplace...")
+                            self.navigate_to_marketplace()
+                            time.sleep(2)
+                        else:
+                            self.logger.warning("Automatic login failed. Will retry in 10 seconds.")
+                            time.sleep(5) # Extra 5s to make it 10s total with the sleep(5) at the end
+                    else:
+                        self.logger.warning("Robot is on LOGIN page or error visible, but no credentials available for auto-login.")
+                
+                # 2. Check for critical element: Wholesaler selector button
+                # This button is only visible on the marketplace/products page when logged in.
+                wholesaler_selector = self.page.locator("label:has-text('Hurtownia')").locator("xpath=..")
+                wholesaler_btn = wholesaler_selector.locator("button").first
+                
+                if wholesaler_btn.is_visible():
+                    self.logger.info("UI recovered: Wholesaler selector is visible. Resuming...")
+                    time.sleep(2) # Brief pause to let everything settle
+                    return True
+                
+                # 3. If sidebar is visible but not on marketplace
+                if self.page.locator("aside").is_visible():
+                    self.logger.info("Logged in, but not on Marketplace page. Attempting auto-navigation...")
+                    if self.navigate_to_marketplace():
+                        time.sleep(2)
+                    else:
+                        self.logger.info("Please navigate manually to 'Produkty' -> 'Wszystkie dostępne produkty'.")
+
+            except Exception as e:
+                self.logger.warning(f"Error in recovery wait loop: {e}")
+            
+            time.sleep(5)
 
     def select_store(self, store_name):
         """Selects a store from the dropdown menu."""
@@ -96,12 +150,17 @@ class ProductAutomation:
             self.page.screenshot(path="navigation_error_debug.png")
         return result
 
-    def set_basic_filters(self, min_price, min_stock):
-        """Sets basic filters: wholesale price and stock level."""
-        self.logger.info(f"Setting filters: min price={min_price}, min stock={min_stock}")
+    def set_basic_filters(self, min_price, max_price, min_stock):
+        """Sets basic filters: wholesale price (min/max) and stock level."""
+        self.logger.info(f"Setting filters: price={min_price}-{max_price}, min stock={min_stock}")
         try:
-            price_input = self.page.locator("label:has-text('Cena hurtowa (PLN)')").locator("xpath=..").locator("input[placeholder='Od']").first
-            price_input.fill(str(min_price))
+            price_container = self.page.locator("label:has-text('Cena hurtowa (PLN)')").locator("xpath=..")
+            
+            price_min_input = price_container.locator("input[placeholder='Od']").first
+            price_min_input.fill(str(min_price))
+            
+            price_max_input = price_container.locator("input[placeholder='Do']").first
+            price_max_input.fill(str(max_price))
             
             stock_input = self.page.locator("label:has-text('Ilość w magazynie')").locator("xpath=..").locator("input[placeholder='Od']").first
             stock_input.fill(str(min_stock))
@@ -124,8 +183,17 @@ class ProductAutomation:
         except Exception as e:
             self.logger.error(f"Error setting basic filters: {e}")
 
+    def ensure_session_active(self):
+        """Checks if the session is active and waits if not."""
+        if "login" in self.page.url or not self.page.locator("aside").is_visible():
+            self.logger.warning("Session lost or UI missing. Waiting for recovery...")
+            self.wait_for_ui_ready()
+            return True
+        return False
+
     def select_wholesaler(self, wholesaler):
         """Selects a wholesaler from the filter dropdown."""
+        self.ensure_session_active()
         self.logger.info(f"Attempting to select wholesaler: {wholesaler}")
         def _action():
             wholesaler_selector = self.page.locator("label:has-text('Hurtownia')").locator("xpath=..")
@@ -184,6 +252,7 @@ class ProductAutomation:
 
     def process_page(self, page_num, store_name, min_price, max_price):
         """Processes a single page of products: selects and sends to marketplace."""
+        self.ensure_session_active()
         self.logger.info(f"Processing page {page_num}")
         
         pagination_inputs = self.page.locator("input[title*='Wpisz numer strony']").filter(visible=True)

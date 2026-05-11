@@ -9,7 +9,7 @@ def start_browser_and_login(username, password):
     """Starts Chrome and logs into Gapli."""
     chrome = ChromeManager()
     if not chrome.start_chrome():
-        return None, None
+        return None, None, None
 
     p = sync_playwright().start()
     browser = p.chromium.connect_over_cdp("http://127.0.0.1:9222")
@@ -18,16 +18,16 @@ def start_browser_and_login(username, password):
 
     client = GapliClient(page)
     if not client.login(username, password):
-        return p, None
+        return p, None, None
 
     # Zmniejszenie zoomu do 50% po zalogowaniu
     client.set_zoom(50)
 
-    return p, page
+    return p, page, client
 
-def process_store_products(page, store_name, wholesalers_file, config):
+def process_store_products(page, store_name, wholesalers_file, config, client=None, username=None, password=None):
     """Main workflow to process products for a specific store."""
-    automation = ProductAutomation(page)
+    automation = ProductAutomation(page, client=client, username=username, password=password)
     reader = ExcelReader(wholesalers_file)
     wholesalers = reader.read_wholesalers()
 
@@ -43,7 +43,11 @@ def process_store_products(page, store_name, wholesalers_file, config):
     if not automation.navigate_to_marketplace():
         return "Failed Marketplace Navigation"
 
-    automation.set_basic_filters(config['min_price_filter'], config['min_stock'])
+    automation.set_basic_filters(
+        config['min_price_filter'], 
+        config.get('max_price_filter', config['max_price_final']), 
+        config['min_stock']
+    )
 
     for wholesaler in wholesalers:
         logging.info(f"Processing wholesaler: {wholesaler}")

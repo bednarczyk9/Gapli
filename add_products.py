@@ -14,9 +14,10 @@ WHOLESALERS_FILE = "Recorded/hurtownie_allegro.xlsx"
 
 CONFIG = {
     'min_price_filter': 200,
+    'max_price_filter': 200,
     'min_stock': 2,
-    'min_price_final': 200,
-    'max_price_final': 44000
+    'min_price_final': 80,
+    'max_price_final': 200
 }
 
 def main():
@@ -27,7 +28,7 @@ def main():
         logging.error("GAPLI_USER or GAPLI_PASS environment variables not set.")
         return
 
-    playwright_instance, page = start_browser_and_login(username, password)
+    playwright_instance, page, client = start_browser_and_login(username, password)
 
     if not page:
         logging.error("Failed to start browser or login.")
@@ -38,7 +39,15 @@ def main():
     try:
         for store_name in STORES:
             logging.info(f"Starting process for store: {store_name}")
-            result = process_store_products(page, store_name, WHOLESALERS_FILE, CONFIG)
+            result = process_store_products(
+                page, 
+                store_name, 
+                WHOLESALERS_FILE, 
+                CONFIG, 
+                client=client, 
+                username=username, 
+                password=password
+            )
             logging.info(f"Finished process for store: {store_name} with result: {result}")
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
