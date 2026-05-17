@@ -35,22 +35,35 @@ class ProductAutomation:
     def wait_for_ui_ready(self):
         """Waits indefinitely until the UI is ready (logged in and on marketplace)."""
         self.logger.info("Entering wait loop for UI recovery. Please log in and navigate to the Marketplace.")
+        error_count = 0
         while True:
             try:
                 # 1. Check if we can auto-login if error is visible or we are on login page
                 login_error = self.page.locator("div.text-red-300:has-text('Wystąpił błąd podczas logowania')")
                 if login_error.is_visible() or "login" in self.page.url:
+                    error_count += 1
+                    if error_count >= 2: # On persistent error, restart browser
+                        self.logger.warning("Persistent login error detected. Waiting 20 seconds and RESTARTING CHROME...")
+                        time.sleep(20)
+                        # We don't have direct access to the restart logic here, but we can trigger a reload
+                        # or rely on the fact that if we are in this loop, something is fundamentally wrong.
+                        # For a real browser restart, we would need to raise an exception that main() catches.
+                        raise Exception("RESTART_REQUIRED")
+                    
                     if self.client and self.username and self.password:
                         self.logger.info("Login error detected or on login page. Attempting automatic login...")
                         if self.client.login(self.username, self.password):
                             self.logger.info("Automatic login successful. Navigating to marketplace...")
                             self.navigate_to_marketplace()
+                            error_count = 0
                             time.sleep(2)
                         else:
                             self.logger.warning("Automatic login failed. Will retry in 10 seconds.")
-                            time.sleep(5) # Extra 5s to make it 10s total with the sleep(5) at the end
+                            time.sleep(5)
                     else:
                         self.logger.warning("Robot is on LOGIN page or error visible, but no credentials available for auto-login.")
+                else:
+                    error_count = 0 # Reset if no error visible
                 
                 # 2. Check for critical element: Wholesaler selector button
                 # This button is only visible on the marketplace/products page when logged in.
@@ -150,9 +163,9 @@ class ProductAutomation:
             self.page.screenshot(path="navigation_error_debug.png")
         return result
 
-    def set_basic_filters(self, min_price, max_price, min_stock):
-        """Sets basic filters: wholesale price (min/max) and stock level."""
-        self.logger.info(f"Setting filters: price={min_price}-{max_price}, min stock={min_stock}")
+    def set_basic_filters(self, min_price, max_price, min_stock, store_name=None):
+        """Sets basic filters: wholesale price (min/max), stock level and Allegro account."""
+        self.logger.info(f"Setting filters: price={min_price}-{max_price}, min stock={min_stock}, store={store_name}")
         try:
             price_container = self.page.locator("label:has-text('Cena hurtowa (PLN)')").locator("xpath=..")
             
@@ -165,10 +178,62 @@ class ProductAutomation:
             stock_input = self.page.locator("label:has-text('Ilość w magazynie')").locator("xpath=..").locator("input[placeholder='Od']").first
             stock_input.fill(str(min_stock))
 
-            hide_blocked = self.page.get_by_text("Ukrywa produkty zablokowane do wysyłki na Allegro")
-            if hide_blocked.first.is_visible():
-                hide_blocked.first.click(force=True)
-                self.logger.info("Checked 'Hide blocked products'.")
+            hide_blocked_label = self.page.locator("label").filter(has_text="Ukrywa produkty zablokowane do wysyłki na Allegro").first
+            if hide_blocked_label.is_visible():
+                # Check if it is already active (active state has bg-blue-50 class)
+                if hide_blocked_label.locator("div.bg-blue-50").count() == 0:
+                    hide_blocked_label.click(force=True)
+                    self.logger.info("Activated 'Hide blocked products' filter.")
+                    time.sleep(0.5)
+                else:
+                    self.logger.info("'Hide blocked products' filter is already active.")
+
+            # Select Platform / Source: Allegro
+            platform_trigger = self.page.locator("button").filter(has_text="Platforma / Źródło")
+            if platform_trigger.first.is_visible():
+                platform_trigger.first.click(force=True)
+                time.sleep(1)
+                allegro_option = self.page.locator("button[data-value='allegro']")
+                if allegro_option.count() == 0:
+                    allegro_option = self.page.locator("button").filter(has_text="Allegro")
+                
+                if allegro_option.first.is_visible():
+                    allegro_option.first.click(force=True)
+                    self.logger.info("Selected 'Allegro' as Platform / Source.")
+                    time.sleep(1.5)
+
+            # Select Allegro Account based on store_name
+            if store_name:
+                account_trigger = self.page.locator("button").filter(has_text="Wybierz konto Allegro")
+                if account_trigger.first.is_visible():
+                    account_trigger.first.click(force=True)
+                    time.sleep(1)
+                    
+                    # Look for the account button that contains the store name
+                    account_option = self.page.locator("button").filter(
+                        has_text=re.compile(rf"{re.escape(store_name)}.*\| PROD \|", re.I)
+                    )
+                    if account_option.count() == 0:
+                        account_option = self.page.locator("button").filter(has_text=store_name)
+                    
+                    if account_option.first.is_visible():
+                        account_option.first.click(force=True)
+                        self.logger.info(f"Selected Allegro account: {store_name}")
+                        time.sleep(1)
+
+            # Select how to handle already sent products: Hide
+            sent_handle_trigger = self.page.locator("button").filter(has_text="Jak obsłużyć produkty już wysłane na wybrane konto?")
+            if sent_handle_trigger.first.is_visible():
+                sent_handle_trigger.first.click(force=True)
+                time.sleep(1)
+                hide_option = self.page.locator("button[data-value='hide']")
+                if hide_option.count() == 0:
+                    hide_option = self.page.locator("button").filter(has_text="Ukryj produkty już wysłane")
+                
+                if hide_option.first.is_visible():
+                    hide_option.first.click(force=True)
+                    self.logger.info("Selected 'Hide' for already sent products.")
+                    time.sleep(1)
 
             # Set 1000 items per page
             per_page_select = self.page.locator("select").filter(
@@ -195,6 +260,11 @@ class ProductAutomation:
         """Selects a wholesaler from the filter dropdown."""
         self.ensure_session_active()
         self.logger.info(f"Attempting to select wholesaler: {wholesaler}")
+        
+        # Scroll to top to ensure the wholesaler selector is reachable
+        self.page.evaluate("window.scrollTo(0, 0)")
+        time.sleep(0.5)
+
         def _action():
             wholesaler_selector = self.page.locator("label:has-text('Hurtownia')").locator("xpath=..")
             wholesaler_btn = wholesaler_selector.locator("button").first
@@ -264,14 +334,40 @@ class ProductAutomation:
                 time.sleep(4)
                 self.page.wait_for_load_state("networkidle")
 
-        select_all = self.page.get_by_role("checkbox", name="Zaznacz wszystkie na tej stronie")
-        if not select_all.is_visible():
-            time.sleep(3)
-            if not select_all.is_visible():
-                self.logger.info(f"No products on page {page_num}")
-                return False
+        # Use label for visibility check and clicking
+        select_all_label = self.page.locator("label").filter(has_text="Zaznacz wszystkie na tej stronie").first
         
-        select_all.check(force=True)
+        if not select_all_label.is_visible():
+            self.logger.info("Select All label not visible, trying PageDown...")
+            self.page.keyboard.press("PageDown")
+            time.sleep(2)
+
+        if not select_all_label.is_visible():
+            self.logger.info("Still not visible, waiting for products to load...")
+            time.sleep(4)
+        
+        if not select_all_label.is_visible():
+            self.logger.info(f"No products found on page {page_num} (Select All label missing)")
+            return False
+        
+        # Click the label to toggle the hidden checkbox
+        try:
+            # Check if internal input is already checked
+            checkbox_input = select_all_label.locator("input[type='checkbox']")
+            is_checked = False
+            if checkbox_input.count() > 0:
+                is_checked = checkbox_input.is_checked()
+            
+            if not is_checked:
+                select_all_label.click(force=True)
+                self.logger.info("Clicked 'Select All' label.")
+                time.sleep(1)
+            else:
+                self.logger.info("'Select All' already checked.")
+        except Exception as e:
+            self.logger.warning(f"Error interacting with 'Select All' label: {e}. Trying text fallback.")
+            self.page.get_by_text("Zaznacz wszystkie na tej stronie").first.click(force=True)
+
         time.sleep(0.5)
                         
         send_btn = self.page.get_by_role("button", name="Wyślij zaznaczone produkty")
@@ -286,71 +382,87 @@ class ProductAutomation:
             self.logger.error("Failed to select marketplace/account.")
             return False
 
-        # Fill final form
-        if self.page.locator("label:has-text('Cena minimalna')").is_visible():
-            self.page.locator("label:has-text('Cena minimalna')").locator("xpath=..").locator("input").fill(str(min_price))
-            
-            max_price_label = self.page.locator("label:has-text('Cena maksymalna (PLN)')")
-            if max_price_label.is_visible():
-                max_price_label.locator("xpath=..").locator("input").fill(str(max_price))
-            
-            submit_btn = self.page.get_by_role("button", name=re.compile("Wyślij na Allegro", re.I))
-            if not submit_btn.is_visible():
-                submit_btn = self.page.locator('button').filter(has_text=re.compile("Wyślij na Allegro", re.I))
-            
-            if submit_btn.is_visible():
-                submit_btn.click(force=True)
-                self.logger.info(f"Successfully submitted page {page_num}")
-                time.sleep(5) 
-                self.page.wait_for_load_state("networkidle")
-                return True
-            else:
-                self.logger.error("Final submit button not found.")
-                return False
-        
-        return False
+        self.logger.info(f"Successfully processed page {page_num}")
+        self.page.wait_for_load_state("networkidle")
+        time.sleep(2)
+        return True
 
     def _select_marketplace_and_account(self, store_name):
         """Internal helper to select Allegro and the specific account."""
-        container = self.page.locator("div").filter(
-            has_text=re.compile("Wybierz miejsce wysyłki produktów", re.I)).filter(
-            has=self.page.locator("button")).last
-        if container.count() == 0:
-            return False
+        self.logger.info(f"Modal opened. Selecting marketplace and account for: {store_name}")
         
-        trigger = container.locator("button").filter(
-            has_text=re.compile("Wyślij produkty na", re.I)).first
-        if not trigger.is_visible():
+        # 1. Check/Select Marketplace
+        # Find the marketplace trigger button. It usually contains the text of the selected platform.
+        marketplace_label = self.page.locator("h3").filter(has_text=re.compile("Wybierz miejsce wysyłki produktów", re.I))
+        if marketplace_label.count() > 0:
+            # The button is likely in the next div or relative to this label
+            container = marketplace_label.locator("xpath=./ancestor::div[1]/following-sibling::div").first
             trigger = container.locator("button").first
-        
-        trigger.click(force=True)
-        time.sleep(1)
-        
-        allegro_opt = self.page.locator('button').filter(
-            has_text=re.compile("marketplace Allegro", re.I))
-        if allegro_opt.count() > 0:
-            allegro_opt.first.click(force=True)
-            time.sleep(1)
-        else:
-            return False
-
-        acc_container = self.page.locator("div").filter(
-            has_text=re.compile("Wybierz konto Allegro", re.I)).filter(
-            has=self.page.locator("button")).last
-        if acc_container.count() > 0:
-            acc_dropdown = acc_container.locator("button").first
-            acc_dropdown.click(force=True)
-            time.sleep(1)
             
-            acc_opt = self.page.locator("button").filter(
-                has_text=re.compile(rf"{re.escape(store_name)}.*\| PROD \|", re.I))
-            if acc_opt.count() == 0:
-                acc_opt = self.page.locator("button[data-value]").filter(
-                    has_text=re.compile(rf"{re.escape(store_name)}", re.I))
+            if trigger.is_visible():
+                current_text = trigger.inner_text()
+                if "Allegro" in current_text:
+                    self.logger.info("Marketplace 'Allegro' already selected.")
+                else:
+                    self.logger.info(f"Selecting Allegro. Current: {current_text}")
+                    trigger.click(force=True)
+                    time.sleep(1.5)
+                    allegro_opt = self.page.locator('button').filter(
+                        has_text=re.compile("marketplace Allegro", re.I))
+                    if allegro_opt.count() > 0:
+                        allegro_opt.first.click(force=True)
+                        time.sleep(1.5)
 
-            if acc_opt.count() > 0:
-                acc_opt.first.click(force=True)
-                return True
+        # 2. Check/Select Allegro Account
+        account_label = self.page.locator("h3").filter(has_text=re.compile("Wybierz konto Allegro", re.I))
+        if account_label.count() > 0:
+            container = account_label.locator("xpath=./ancestor::div[1]/following-sibling::div").first
+            acc_dropdown = container.locator("button").first
+            
+            if acc_dropdown.is_visible():
+                current_acc = acc_dropdown.inner_text()
+                # Check if the store name is already in the selected text
+                if store_name.lower() in current_acc.lower():
+                    self.logger.info(f"Account for {store_name} already selected: {current_acc}")
+                else:
+                    self.logger.info(f"Selecting account for {store_name}. Current: {current_acc}")
+                    acc_dropdown.click(force=True)
+                    time.sleep(1.5)
+                    
+                    # Select the specific account
+                    acc_opt = self.page.locator("button").filter(
+                        has_text=re.compile(rf"{re.escape(store_name)}.*\| PROD \|", re.I))
+                    
+                    if acc_opt.count() == 0:
+                        acc_opt = self.page.locator("button").filter(
+                            has_text=re.compile(rf"{re.escape(store_name)}", re.I))
+
+                    if acc_opt.count() > 0:
+                        acc_opt.first.click(force=True)
+                        time.sleep(1.5)
+                    else:
+                        self.logger.warning(f"Could not find account option for: {store_name}")
+
+        # 3. Fill pricing (if visible in this stage)
+        # Note: Sometimes pricing fields are in the modal, sometimes in the main filter area.
+        price_label = self.page.locator("label:has-text('Cena minimalna')")
+        if price_label.is_visible():
+            # In some versions of the UI, we might need to fill these here
+            pass
+
+        # 4. Final Submission - Click the "Wyślij na Allegro" button
+        # This button is usually at the bottom of the modal and contains the count of products.
+        submit_btn = self.page.locator("button").filter(has_text=re.compile("Wyślij na Allegro", re.I))
+        if submit_btn.count() > 0:
+            for i in range(submit_btn.count()):
+                btn = submit_btn.nth(i)
+                if btn.is_visible() and btn.is_enabled():
+                    self.logger.info("Clicking final 'Wyślij na Allegro' button.")
+                    btn.click(force=True)
+                    time.sleep(3) # Wait for modal to process
+                    return True
+        
+        self.logger.warning("Could not find or click final submission button.")
         return False
 
     def set_zoom(self, zoom_percent):

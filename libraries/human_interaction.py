@@ -10,9 +10,15 @@ class HumanInteraction:
         self.logger = logging.getLogger(__name__)
 
     def type_like_human(self, selector, text):
-        """Types text with random delays between characters."""
+        """Types text with random delays between characters, clearing the field first."""
         element = self.page.locator(selector)
+        element.wait_for(state="visible", timeout=10000)
         element.click()
+        
+        # Clear the field first - using fill("") is most reliable
+        element.fill("")
+        time.sleep(random.uniform(0.1, 0.3))
+        
         for char in text:
             self.page.keyboard.type(char, delay=random.uniform(50, 150))
         time.sleep(random.uniform(0.2, 0.5))

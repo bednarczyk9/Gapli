@@ -46,7 +46,8 @@ def process_store_products(page, store_name, wholesalers_file, config, client=No
     automation.set_basic_filters(
         config['min_price_filter'], 
         config.get('max_price_filter', config['max_price_final']), 
-        config['min_stock']
+        config['min_stock'],
+        store_name=store_name
     )
 
     for wholesaler in wholesalers:

@@ -15,3 +15,8 @@ temp/
 testrun/*
 .~lock*
 *.pkl
+
+# Data and Secrets
+gapli_products_list.json
+allegro_marketplace_products.json
+allegro_token.json
