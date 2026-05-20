@@ -202,25 +202,6 @@ class ProductAutomation:
                     self.logger.info("Selected 'Allegro' as Platform / Source.")
                     time.sleep(1.5)
 
-            # Select Allegro Account based on store_name
-            if store_name:
-                account_trigger = self.page.locator("button").filter(has_text="Wybierz konto Allegro")
-                if account_trigger.first.is_visible():
-                    account_trigger.first.click(force=True)
-                    time.sleep(1)
-                    
-                    # Look for the account button that contains the store name
-                    account_option = self.page.locator("button").filter(
-                        has_text=re.compile(rf"{re.escape(store_name)}.*\| PROD \|", re.I)
-                    )
-                    if account_option.count() == 0:
-                        account_option = self.page.locator("button").filter(has_text=store_name)
-                    
-                    if account_option.first.is_visible():
-                        account_option.first.click(force=True)
-                        self.logger.info(f"Selected Allegro account: {store_name}")
-                        time.sleep(1)
-
             # Select how to handle already sent products: Hide
             sent_handle_trigger = self.page.locator("button").filter(has_text="Jak obsłużyć produkty już wysłane na wybrane konto?")
             if sent_handle_trigger.first.is_visible():
@@ -235,6 +216,46 @@ class ProductAutomation:
                     self.logger.info("Selected 'Hide' for already sent products.")
                     time.sleep(1)
 
+            # Select Allegro Account based on store_name
+            time.sleep(1)
+            account_label = self.page.locator("label").filter(has_text="Wybierz konto Allegro")
+            if account_label.is_visible():
+                account_container = account_label.locator("xpath=..")
+                # Trigger is the main button, not the 'Clear' button
+                account_trigger = account_container.locator("button").filter(
+                    has_not=self.page.locator("button[title='Wyczyść wybór']")
+                ).first
+                
+                # Check if correct account is already selected
+                current_text = account_trigger.inner_text()
+                if store_name.lower() not in current_text.lower():
+                    self.logger.info(f"Account '{store_name}' not selected (current: '{current_text.strip()}'). Selecting...")
+                    
+                    # If there's a clear button, click it first to reset
+                    clear_btn = account_container.locator("button[title='Wyczyść wybór']")
+                    if clear_btn.is_visible():
+                        clear_btn.click(force=True)
+                        time.sleep(0.5)
+                    
+                    account_trigger.click(force=True)
+                    time.sleep(1)
+                    
+                    # Look for the account button that contains the store name
+                    # Search globally or within container; first try container as it's more precise
+                    account_option = account_container.locator("button").filter(
+                        has_text=re.compile(rf"{re.escape(store_name)}.*\| PROD \|", re.I)
+                    )
+                    if account_option.count() == 0:
+                        account_option = self.page.locator("button").filter(has_text=store_name)
+                    
+                    if account_option.first.is_visible():
+                        account_option.first.click(force=True)
+                        self.logger.info(f"Selected Allegro account: {store_name}")
+                        time.sleep(1)
+                    else:
+                        self.logger.warning(f"Could not find Allegro account option for: {store_name}")
+                else:
+                    self.logger.info(f"Allegro account '{store_name}' is already selected.")
             # Set 1000 items per page
             per_page_select = self.page.locator("select").filter(
                 has=self.page.locator("option[value='1000']")).first

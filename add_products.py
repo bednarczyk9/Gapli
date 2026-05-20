@@ -14,7 +14,7 @@ logging.basicConfig(
 STORES = ["hit_bazar", "radosnydzieciak", "skarbiec_ofert"]
 # STORES = ["radosnydzieciak"]
 WHOLESALERS_FILE = "Recorded/hurtownie_allegro.xlsx"
-
+    
 CONFIG = {
     'min_price_filter': 80,
     'max_price_filter': 50000,
