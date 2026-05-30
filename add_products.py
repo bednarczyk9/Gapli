@@ -11,15 +11,15 @@ logging.basicConfig(
 )
 
 # Configuration
-STORES = ["hit_bazar", "radosnydzieciak", "skarbiec_ofert"]
-# STORES = ["radosnydzieciak"]
+# STORES = ["hit_bazar", "radosnydzieciak", "skarbiec_ofert","AlejaOkazji"]
+STORES = ["AlejaOkazji"]
 WHOLESALERS_FILE = "Recorded/hurtownie_allegro.xlsx"
     
 CONFIG = {
-    'min_price_filter': 80,
+    'min_price_filter': 50,
     'max_price_filter': 50000,
     'min_stock': 2,
-    'min_price_final': 80,
+    'min_price_final': 50,
     'max_price_final': 50000
 }
 

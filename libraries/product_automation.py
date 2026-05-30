@@ -193,12 +193,12 @@ class ProductAutomation:
             if platform_trigger.first.is_visible():
                 platform_trigger.first.click(force=True)
                 time.sleep(1)
-                allegro_option = self.page.locator("button[data-value='allegro']")
-                if allegro_option.count() == 0:
-                    allegro_option = self.page.locator("button").filter(has_text="Allegro")
                 
-                if allegro_option.first.is_visible():
-                    allegro_option.first.click(force=True)
+                dropdown = self.page.locator("div.absolute.z-50").filter(visible=True).last
+                allegro_option = dropdown.locator("button").filter(has_text=re.compile(r"Allegro", re.I)).first
+                
+                if allegro_option.is_visible():
+                    allegro_option.click(force=True)
                     self.logger.info("Selected 'Allegro' as Platform / Source.")
                     time.sleep(1.5)
 
@@ -207,61 +207,89 @@ class ProductAutomation:
             if sent_handle_trigger.first.is_visible():
                 sent_handle_trigger.first.click(force=True)
                 time.sleep(1)
-                hide_option = self.page.locator("button[data-value='hide']")
-                if hide_option.count() == 0:
-                    hide_option = self.page.locator("button").filter(has_text="Ukryj produkty już wysłane")
                 
-                if hide_option.first.is_visible():
-                    hide_option.first.click(force=True)
+                dropdown = self.page.locator("div.absolute.z-50").filter(visible=True).last
+                hide_option = dropdown.locator("button").filter(has_text=re.compile(r"Ukryj produkty już wysłane", re.I)).first
+                
+                if hide_option.is_visible():
+                    hide_option.click(force=True)
                     self.logger.info("Selected 'Hide' for already sent products.")
                     time.sleep(1)
 
             # Select Allegro Account based on store_name
             time.sleep(1)
-            # Find the specific label "Wybierz konto Allegro"
-            account_label = self.page.locator("label").filter(has_text=re.compile(r"^Wybierz konto Allegro$", re.I)).first
-            
-            if account_label.is_visible():
-                # Structural path: finding the trigger button relative to the label
-                # In the provided HTML, the button is inside a relative div which is a sibling of the label/select
-                account_trigger = account_label.locator("xpath=./following-sibling::div//button[not(@title)]").first
-                
-                if not account_trigger.is_visible():
-                    # Fallback path if the structure is slightly different
-                    account_trigger = account_label.locator("xpath=../descendant::button[not(@title)]").first
+            account_label = self.page.locator("label").filter(has_text=re.compile(r"^Wybierz konto Allegro$", re.I)).filter(visible=True).first
+            if not account_label.is_visible():
+                account_label = self.page.locator("label:visible").filter(has_text=re.compile(r"Wybierz konto Allegro", re.I)).first
 
-                current_text = account_trigger.inner_text().strip()
+            if account_label.is_visible():
+                account_trigger = account_label.locator("xpath=./following-sibling::div//button[not(@title)]").filter(visible=True).first
+                if not account_trigger.is_visible():
+                    account_trigger = account_label.locator("xpath=../descendant::button[not(@title)]").filter(visible=True).first
+
+                # Check current value via span if possible
+                current_val_span = account_trigger.locator("span.text-gray-900, span[class*='dark:text-white']").filter(visible=True).first
+                current_text = ""
+                if current_val_span.is_visible():
+                    current_text = current_val_span.inner_text().strip()
+                else:
+                    current_text = account_trigger.inner_text().strip()
+                
                 self.logger.info(f"Allegro account field found. Current value: '{current_text}'")
                 
                 if store_name and store_name.lower() not in current_text.lower():
                     self.logger.info(f"Account '{store_name}' not selected. Initiating change...")
                     
-                    # Check for and click 'Clear' button if it exists to reset selection
                     clear_btn = account_label.locator("xpath=../descendant::button[@title='Wyczyść wybór']").first
                     if clear_btn.is_visible():
-                        self.logger.info("Clicking 'Clear' button to reset Allegro account selection.")
                         clear_btn.click(force=True)
                         time.sleep(0.5)
                     
-                    # Click the trigger to open the list
                     account_trigger.click(force=True)
-                    time.sleep(1.5)
+                    # Wait for dropdown to be visible
+                    dropdown = self.page.locator("div.absolute.z-50").filter(visible=True)
+                    try:
+                        dropdown.last.wait_for(state="visible", timeout=5000)
+                    except:
+                        self.logger.warning("Dropdown did not appear within 5s.")
                     
-                    # Look for the account button that contains the store name
-                    account_option = self.page.locator("button").filter(
-                        has_text=re.compile(rf"{re.escape(store_name)}.*\| PROD \|", re.I)
-                    )
-                    if account_option.count() == 0:
-                        account_option = self.page.locator("button").filter(has_text=store_name)
+                    time.sleep(1)
+                    target_dropdown = dropdown.last
+                    account_option = target_dropdown.locator("button").filter(
+                        has_text=re.compile(rf"{re.escape(store_name)}.*\| PROD \|", re.I)).first
                     
-                    if account_option.first.is_visible():
-                        account_option.first.click(force=True)
-                        self.logger.info(f"Successfully selected Allegro account: {store_name}")
-                        time.sleep(1)
+                    if not account_option.is_visible():
+                        account_option = target_dropdown.locator("button").filter(has_text=re.compile(rf"{re.escape(store_name)}", re.I)).first
+
+                    if account_option.is_visible():
+                        self.logger.info(f"Clicking account option for: {store_name}")
+                        account_option.click(force=True)
+                        time.sleep(2)
+                        
+                        # Verification
+                        new_val_span = account_trigger.locator("span.text-gray-900, span[class*='dark:text-white']").filter(visible=True).first
+                        new_text = new_val_span.inner_text().strip() if new_val_span.is_visible() else account_trigger.inner_text().strip()
+                        if store_name.lower() in new_text.lower():
+                            self.logger.info(f"Verified: Allegro account successfully changed to: {new_text}")
+                        else:
+                            self.logger.error(f"Verification FAILED: Selection clicked but trigger shows: '{new_text}'")
                     else:
                         self.logger.warning(f"Could not find Allegro account option for: {store_name}")
                 else:
                     self.logger.info(f"Allegro account '{store_name}' is already correctly selected.")
+            
+            # Set 1000 items per page
+            per_page_select = self.page.locator("select").filter(
+                has=self.page.locator("option[value='1000']")).first
+            if per_page_select.is_visible():
+                current_per_page = per_page_select.evaluate("node => node.value")
+                if current_per_page != "1000":
+                    per_page_select.select_option("1000")
+                    self.logger.info("Set 1000 items per page.")
+                    self.page.wait_for_load_state("networkidle")
+                    time.sleep(2)
+        except Exception as e:
+            self.logger.error(f"Error setting basic filters: {e}")
             # Set 1000 items per page
             per_page_select = self.page.locator("select").filter(
                 has=self.page.locator("option[value='1000']")).first
@@ -418,78 +446,97 @@ class ProductAutomation:
         """Internal helper to select Allegro and the specific account."""
         self.logger.info(f"Modal opened. Selecting marketplace and account for: {store_name}")
         
-        # 1. Check/Select Marketplace
-        # Find the marketplace trigger button. It usually contains the text of the selected platform.
-        marketplace_label = self.page.locator("h3").filter(has_text=re.compile("Wybierz miejsce wysyłki produktów", re.I))
-        if marketplace_label.count() > 0:
-            # The button is likely in the next div or relative to this label
-            container = marketplace_label.locator("xpath=./ancestor::div[1]/following-sibling::div").first
-            trigger = container.locator("button").first
+        # 1. Select Marketplace: "📦 Wyślij produkty na marketplace Allegro"
+        marketplace_label = self.page.locator("h3").filter(has_text="Wybierz miejsce wysyłki produktów").filter(visible=True).first
+        if marketplace_label.is_visible():
+            marketplace_trigger = marketplace_label.locator("xpath=ancestor::div[contains(@class, 'flex')]/following-sibling::div//button").filter(visible=True).first
             
-            if trigger.is_visible():
-                current_text = trigger.inner_text()
-                if "Allegro" in current_text:
-                    self.logger.info("Marketplace 'Allegro' already selected.")
-                else:
-                    self.logger.info(f"Selecting Allegro. Current: {current_text}")
-                    trigger.click(force=True)
-                    time.sleep(1.5)
-                    allegro_opt = self.page.locator('button').filter(
-                        has_text=re.compile("marketplace Allegro", re.I))
-                    if allegro_opt.count() > 0:
-                        allegro_opt.first.click(force=True)
-                        time.sleep(1.5)
-
-        # 2. Check/Select Allegro Account
-        account_label = self.page.locator("h3").filter(has_text=re.compile("Wybierz konto Allegro", re.I))
-        if account_label.count() > 0:
-            container = account_label.locator("xpath=./ancestor::div[1]/following-sibling::div").first
-            acc_dropdown = container.locator("button").first
-            
-            if acc_dropdown.is_visible():
-                current_acc = acc_dropdown.inner_text()
-                # Check if the store name is already in the selected text
-                if store_name.lower() in current_acc.lower():
-                    self.logger.info(f"Account for {store_name} already selected: {current_acc}")
-                else:
-                    self.logger.info(f"Selecting account for {store_name}. Current: {current_acc}")
-                    acc_dropdown.click(force=True)
+            if marketplace_trigger.is_visible():
+                current_mkt = marketplace_trigger.inner_text().strip()
+                if "📦 Wyślij produkty na marketplace Allegro" not in current_mkt:
+                    self.logger.info(f"Clicking marketplace trigger. Current: {current_mkt}")
+                    marketplace_trigger.click(force=True)
                     time.sleep(1.5)
                     
-                    # Select the specific account
-                    acc_opt = self.page.locator("button").filter(
-                        has_text=re.compile(rf"{re.escape(store_name)}.*\| PROD \|", re.I))
+                    # Target dropdown specifically
+                    dropdown = self.page.locator("div.absolute.z-50").filter(visible=True).last
+                    allegro_opt = dropdown.locator("button").filter(has_text="📦 Wyślij produkty na marketplace Allegro").first
                     
-                    if acc_opt.count() == 0:
-                        acc_opt = self.page.locator("button").filter(
-                            has_text=re.compile(rf"{re.escape(store_name)}", re.I))
-
-                    if acc_opt.count() > 0:
-                        acc_opt.first.click(force=True)
-                        time.sleep(1.5)
+                    if allegro_opt.is_visible():
+                        allegro_opt.click(force=True)
+                        time.sleep(1)
                     else:
-                        self.logger.warning(f"Could not find account option for: {store_name}")
+                        self.logger.warning("Could not find Allegro option in dropdown.")
+                else:
+                    self.logger.info("Marketplace 'Allegro' already selected.")
 
-        # 3. Fill pricing (if visible in this stage)
-        # Note: Sometimes pricing fields are in the modal, sometimes in the main filter area.
-        price_label = self.page.locator("label:has-text('Cena minimalna')")
-        if price_label.is_visible():
-            # In some versions of the UI, we might need to fill these here
-            pass
+        # 2. Select Allegro Account
+        account_label = self.page.locator("h3").filter(has_text="Wybierz konto Allegro").filter(visible=True).first
+        if account_label.is_visible():
+            account_trigger = account_label.locator("xpath=ancestor::div[contains(@class, 'flex')]/following-sibling::div//button").filter(visible=True).first
+            
+            if account_trigger.is_visible():
+                # Check current value via the span inside the button
+                current_val_span = account_trigger.locator("span.text-gray-900, span[class*='dark:text-white']").filter(visible=True).first
+                current_acc = ""
+                if current_val_span.is_visible():
+                    current_acc = current_val_span.inner_text().strip()
+                else:
+                    current_acc = account_trigger.inner_text().strip()
+                
+                self.logger.info(f"Account trigger found. Current value: '{current_acc}'")
+                
+                if store_name.lower() not in current_acc.lower():
+                    self.logger.info(f"Changing account to: {store_name}")
+                    
+                    # Clear selection if 'X' button exists
+                    clear_btn = account_label.locator("xpath=ancestor::div[contains(@class, 'flex')]/following-sibling::div//button[@title='Wyczyść wybór']").filter(visible=True).first
+                    if clear_btn.is_visible():
+                        clear_btn.click(force=True)
+                        time.sleep(0.5)
+                        
+                    account_trigger.click(force=True)
+                    time.sleep(1.5)
+                    
+                    # Search for account option if search input is available
+                    search_input = self.page.locator("div.absolute.z-50 input[placeholder='Szukaj opcji...']").filter(visible=True).first
+                    if search_input.is_visible():
+                        search_input.fill(store_name)
+                        time.sleep(1)
 
-        # 4. Final Submission - Click the "Wyślij na Allegro" button
-        # This button is usually at the bottom of the modal and contains the count of products.
-        submit_btn = self.page.locator("button").filter(has_text=re.compile("Wyślij na Allegro", re.I))
-        if submit_btn.count() > 0:
-            for i in range(submit_btn.count()):
-                btn = submit_btn.nth(i)
-                if btn.is_visible() and btn.is_enabled():
-                    self.logger.info("Clicking final 'Wyślij na Allegro' button.")
-                    btn.click(force=True)
-                    time.sleep(3) # Wait for modal to process
-                    return True
+                    # Look for the account button inside the scoped dropdown
+                    dropdown = self.page.locator("div.absolute.z-50").filter(visible=True).last
+                    acc_opt = dropdown.locator("button").filter(
+                        has_text=re.compile(rf"{re.escape(store_name)}.*\| PROD \|", re.I)).first
+                    
+                    if not acc_opt.is_visible():
+                        acc_opt = dropdown.locator("button").filter(has_text=re.compile(rf"{re.escape(store_name)}", re.I)).first
+
+                    if acc_opt.is_visible():
+                        self.logger.info(f"Clicking account option for: {store_name}")
+                        acc_opt.click(force=True)
+                        time.sleep(2)
+                        
+                        # Verification
+                        new_val_span = account_trigger.locator("span.text-gray-900, span[class*='dark:text-white']").filter(visible=True).first
+                        new_text = new_val_span.inner_text().strip() if new_val_span.is_visible() else account_trigger.inner_text().strip()
+                        if store_name.lower() in new_text.lower():
+                            self.logger.info(f"Verified: Account changed to: {new_text}")
+                    else:
+                        self.logger.warning(f"Could not find option for {store_name} in account dropdown.")
+                else:
+                    self.logger.info(f"Account {store_name} already selected.")
+
+        # 3. Final Submission
+        submit_btn = self.page.locator("button:visible").filter(has_text=re.compile(r"Wyślij na Allegro|Potwierdź|Zapisz|Wyślij produkty", re.I)).last
         
-        self.logger.warning("Could not find or click final submission button.")
+        if submit_btn.is_visible() and submit_btn.is_enabled():
+            self.logger.info(f"Clicking final submission button: '{submit_btn.inner_text().strip()}'")
+            submit_btn.click(force=True)
+            time.sleep(5)
+            return True
+        
+        self.logger.warning("Final submission button not found or not ready.")
         return False
 
     def set_zoom(self, zoom_percent):

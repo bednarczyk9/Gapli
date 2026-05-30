@@ -1,0 +1,45 @@
+{
+    "success": true,
+    "products": [
+        {
+            "sku": "18277_2",
+            "name": "Activejet AE-603BNX – Profesjonalna Jakość Druku na Wyciągnięcie Ręki!",
+            "description": "<p>Tusz <strong>Activejet AE-603BNX</strong> to zamiennik tuszu Epson 603XL, stworzony z myślą o użytkownikach, którzy oczekują wysokiej jakości druku w przystępnej cenie. Dzięki pojemności <strong>18,2 ml</strong> zapewnia większą wydajność, umożliwiając drukowanie większej ilości stron bez konieczności częstej wymiany wkładu. Atrament pigmentowy, z którego wykonany jest tusz, gwarantuje <strong>wyrazistą czerń</strong>, która nie blaknie i jest odporna na rozmazywanie. To idealne rozwiązanie do drukowania zarówno dokumentów tekstowych, jak i materiałów graficznych, które muszą zachować swoją jakość przez długi czas.</p>\n<p>Tusz Activejet AE-603BNX jest kompatybilny z wieloma modelami drukarek Epson, takimi jak <strong>Epson Expression Home</strong> oraz <strong>Epson WorkForce</strong>. Oferuje wydruki o wysokiej jakości, które spełniają oczekiwania zarówno w zastosowaniach domowych, jak i biurowych. Produkt posiada certyfikaty zgodności z międzynarodowymi normami ISO, co świadczy o jego niezawodności i bezpieczeństwie użytkowania.</p>\n<p><strong>Dlaczego warto wybrać tusz Activejet AE-603BNX?</strong></p>\n<ul>\n<li><strong>Wysoka wydajność</strong>: 18,2 ml atramentu, co zapewnia więcej wydruków na jednym wkładzie.</li>\n<li><strong>Pigmentowy atrament</strong>: Ostry, wyraźny tekst i głęboka czerń.</li>\n<li><strong>Zamiennik klasy XL</strong>: Idealny do intensywnego użytkowania.</li>\n<li><strong>Kompatybilność</strong>: Obsługuje drukarki Epson Expression Home XP-2100, XP-3100, XP-4100 i WorkForce WF-2810, WF-2830, WF-2850.</li>\n<li><strong>Certyfikaty jakości</strong>: Zgodność z normami ISO, co gwarantuje bezproblemową pracę i wydajność.</li>\n</ul>\n<h3>Specyfikacja:</h3>\n<ul>\n<li><strong>Kolor</strong>: Czarny</li>\n<li><strong>Pojemność</strong>: 18,2 ml</li>\n<li><strong>Typ atramentu</strong>: Pigmentowy</li>\n<li><strong>Kompatybilność</strong>: Epson Expression Home XP-2100, XP-3100, XP-4100; Epson WorkForce WF-2810DWF, WF-2830DWF</li>\n<li><strong>Certyfikaty</strong>: ISO 9001, ISO 14001</li>\n</ul>\n<h3>EAN:</h3>\n<p><strong>5901443112570</strong></p>\n<p>Tusz Activejet AE-603BNX to niezawodny wybór dla tych, którzy szukają wydajnego i ekonomicznego zamiennika, oferującego wysoką jakość wydruków zarówno w domu, jak i w biurze.</p>",
+            "short_description": "<p>Tusz Activejet AE-603BNX (zamiennik Epson 603XL T03A14) to niezawodny wybór dla użytkowników drukarek Epson. Oferuje <strong>wysoką wydajność</strong> na poziomie <strong>18,2 ml</strong> oraz intensywną czerń dzięki pigmentowemu atramentowi. Idealny do codziennych wydruków dokumentów i grafik, gwarantując ich długotrwałą jakość.</p>",
+            "ean": "5901443112570",
+            "type": "simple",
+            "price_net": 42.5212,
+            "price_gross": 52.3,
+            "wholesale_net_price": 39.19,
+            "stock_quantity": 1,
+            "available": true,
+            "weight": null,
+            "width": null,
+            "height": null,
+            "depth": null,
+            "is_oversized": false,
+            "brand": null,
+            "manufacturer_code": null,
+            "image_url": "https://wyprzedazmagazynu.ec-at.com/wp-content/uploads/2024/10/Screenshot_388.jpg",
+            "gallery_images": [
+                "https://wyprzedazmagazynu.ec-at.com/wp-content/uploads/2024/10/Screenshot_388.jpg"
+            ],
+            "category_ids": [],
+            "parser_id": 2,
+            "tax_class": "23",
+            "product_condition": "Nowy",
+            "updated_at": "2026-05-30T02:29:56.879Z",
+            "sellable": true
+        }
+    ],
+    "pagination": {
+        "total": 448,
+        "limit": 1,
+        "offset": 0,
+        "has_more": true
+    },
+    "performance": {
+        "duration_ms": 16
+    },
+    "timestamp": "2026-05-30T14:58:46.114Z"
+}

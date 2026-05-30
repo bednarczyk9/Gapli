@@ -1,0 +1,48 @@
+{
+    "success": true,
+    "products": [
+        {
+            "id": "4734509",
+            "sku": "12827_166",
+            "allegro_offer_id": "18608849851",
+            "name": "M747 Sukienka żakietowa bez rękawów - czarna",
+            "status": "active",
+            "price": "285.02",
+            "stock_quantity": 9988,
+            "account_id": "116",
+            "platform": "allegro",
+            "created_at": "2026-05-22T13:49:35.962Z",
+            "updated_at": "2026-05-30T15:01:14.130Z",
+            "marketplace_account_name": "Konto allegro-pl 14:36:40",
+            "allegro_login": "AlejaOkazji",
+            "allegro_company_name": "SUKCES SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+            "allegro_email": "alejaokazji14@gmail.com",
+            "allegro_marketplace_id": "allegro-pl",
+            "store_name": "AlejaOkazji",
+            "operator_email": "mariaacwikla@gmail.com"
+        }
+    ],
+    "pagination": {
+        "total": 19784,
+        "limit": 1,
+        "offset": 0,
+        "has_more": true
+    },
+    "_meta": {
+        "returned_count": 1,
+        "total_count": 19784,
+        "has_more": true,
+        "limit": 1,
+        "offset": 0,
+        "filters_applied": {
+            "account_id": "116",
+            "status": "active",
+            "platform": "allegro",
+            "limit": 1
+        }
+    },
+    "performance": {
+        "duration_ms": 115
+    },
+    "timestamp": "2026-05-30T15:01:24.974Z"
+}
