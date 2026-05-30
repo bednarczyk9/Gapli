@@ -93,24 +93,31 @@ def fetch_all_active_products():
     
     processed_data = []
     for p in all_products:
-        # Extract fields
-        description = p.get("gapli_product_description")
-        if not description or len(description) < 50: # Try fallback
-            description = format_description(p.get("allegro_catalog_description"))
+        # Extract Allegro description (prioritize offer, then catalog)
+        desc_allegro_raw = p.get("allegro_offer_description")
+        if desc_allegro_raw:
+            opis_allegro = format_description(desc_allegro_raw)
+        else:
+            opis_allegro = format_description(p.get("allegro_catalog_description"))
             
+        # Extract Gapli description
+        opis_gapli = p.get("gapli_product_description") or ""
+        
         params = format_parameters(p.get("allegro_catalog_parameters"))
         
         processed_data.append({
+            "Sklep Allegro": p.get("allegro_login") or "radosnydzieciak",
             "SKU": p.get("sku"),
             "Nazwa": p.get("gapli_product_name") or p.get("allegro_catalog_product_name"),
             "Allegro ID": p.get("allegro_offer_id"),
-            "Cena Brutto": p.get("allegro_offer_price_final_brutto") or p.get("gapli_product_sale_price_brutto"),
+            "Cena Allegro Brutto": p.get("allegro_offer_price_final_brutto") or p.get("gapli_product_sale_price_brutto"),
             "Stan Magazynowy": p.get("gapli_product_stock_quantity"),
             "EAN": p.get("gapli_product_global_unique_id"),
-            "Opis": description,
-            "Parametry": params,
-            "Link Allegro": p.get("allegro_offer_url")
-        })
+            "Opis Allegro": opis_allegro,
+            "Opis Gapli": opis_gapli,
+                "Parametry": params,
+                "Link Allegro": p.get("allegro_offer_url")
+            })
         
     return processed_data
 
