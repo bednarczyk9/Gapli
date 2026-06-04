@@ -58,7 +58,8 @@ class ChromeManager:
             f"--remote-debugging-port={self.port}",
             f"--user-data-dir={self.profile_path}",
             "--no-first-run",
-            "--no-default-browser-check"
+            "--no-default-browser-check",
+            "--start-maximized"
         ]
 
         try:
