@@ -8,9 +8,10 @@ import logging
 class ChromeManager:
     """Class for managing Chrome browser instance with remote debugging."""
 
-    def __init__(self, port=9222, profile_name="chrome-debug"):
+    def __init__(self, port=9222, profile_name="chrome-debug", user_agent=None):
         self.port = port
         self.profile_path = os.path.join(os.environ.get("TEMP", "."), profile_name)
+        self.user_agent = user_agent
         self.logger = logging.getLogger(__name__)
 
     def kill_chrome(self):
@@ -61,6 +62,9 @@ class ChromeManager:
             "--no-default-browser-check",
             "--start-maximized"
         ]
+
+        if self.user_agent:
+            chrome_args.append(f"--user-agent={self.user_agent}")
 
         try:
             subprocess.Popen(chrome_args)
