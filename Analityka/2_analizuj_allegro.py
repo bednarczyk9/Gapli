@@ -5,71 +5,24 @@ import time
 import re
 import random
 import glob
+import csv
 from datetime import datetime
 from playwright.sync_api import sync_playwright
+from playwright_stealth import Stealth
 import sys
 
-# Dodanie ścieżki do głównego folderu, żeby import ChromeManager działał
+# Dodanie ścieżki do głównego folderu
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from libraries.chrome_manager import ChromeManager
+from libraries.human_interaction import HumanInteraction
 from modem.modem_fast import reset_modem_ip, get_public_ip
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-CHROME_DEBUG_PORT = 9222
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:125.0) Gecko/20100101 Firefox/125.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 OPR/110.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 OPR/109.0.0.0",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (iPad; CPU OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:123.0) Gecko/20100101 Firefox/123.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 OPR/108.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 OPR/107.0.0.0",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 OPR/106.0.0.0",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Linux; Android 12; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
-]
+ACCOUNTS_CSV = os.path.join("allegro_accounts", "accounts_list.csv")
+LOGIN_URL = "https://allegro.pl/logowanie?origin_url=%2F%3Fdd_referrer%3D"
+LOGOUT_URL = "https://allegro.pl/wyloguj?origin_url=%2F"
 
 def is_blocked(page):
     try:
@@ -80,49 +33,135 @@ def is_blocked(page):
                 has_iframe = True
                 break
         
-        indicators = ["nietypowy ruch", "pokaż, że jesteś człowiekiem", "potwierdź, że jesteś człowiekiem", "sprawdź czy nie jesteś robotem", "udowodnij, że nie jesteś robotem"]
+        indicators = [
+            "nietypowy ruch", 
+            "pokaż, że jesteś człowiekiem", 
+            "potwierdź, że jesteś człowiekiem", 
+            "sprawdź czy nie jesteś robotem", 
+            "udowodnij, że nie jesteś robotem",
+            "zostałeś zablokowany",
+            "something in your behavior has caught our attention"
+        ]
         return any(x in content for x in indicators) or page.locator("iframe[title*='reCAPTCHA']").is_visible() or has_iframe
     except:
         return False
 
-def find_cheapest_on_allegro(page, ean):
+def wait_for_captcha(page):
+    if is_blocked(page):
+        logger.warning("WYKRYTO BLOKADĘ CAPTCHA! Rozwiąż ją ręcznie w oknie przeglądarki.")
+        while is_blocked(page):
+            time.sleep(5)
+        logger.info("Blokada Captcha rozwiązana. Kontynuuję...")
+        time.sleep(2)
+
+def handle_cookies(page, hi):
+    """Akceptuje zgody cookies jeśli się pojawią."""
+    try:
+        time.sleep(2)
+        consent_selectors = [
+            "button[data-testid='accept_home_view_action']",
+            "button[data-metatestid='accept-event']",
+            "button:has-text('Ok, zgadzam się')",
+            "button:has-text('Zgadzam się')",
+            "button:has-text('PRZEJDŹ DALEJ')",
+            "button[data-role='accept-consent']"
+        ]
+        for selector in consent_selectors:
+            btn = page.locator(selector).first
+            if btn.is_visible(timeout=3000):
+                logger.info(f"Klikam przycisk zgody: {selector}")
+                hi.jitter_mouse()
+                hi.move_and_click_like_human(btn)
+                page.wait_for_selector("#opbox-gdpr-consents-modal", state="hidden", timeout=5000)
+                time.sleep(1)
+                return True
+    except: pass
+    return False
+
+def login_to_allegro(page, hi):
+    """Loguje się do Allegro używając losowego konta z listy."""
+    if not os.path.exists(ACCOUNTS_CSV):
+        logger.warning(f"Brak pliku z kontami: {ACCOUNTS_CSV}. Kontynuuję jako niezalogowany.")
+        return False
+
+    try:
+        accounts = []
+        with open(ACCOUNTS_CSV, mode='r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            accounts = [row for row in reader if row.get('Status') == 'SUCCESS']
+        
+        if not accounts:
+            logger.warning("Brak aktywnych kont w pliku CSV.")
+            return False
+
+        account = random.choice(accounts)
+        email = account.get('Email')
+        password = account.get('Haslo_Allegro')
+
+        logger.info(f"Próba logowania na konto: {email}")
+        page.goto(LOGIN_URL, wait_until="load", timeout=60000)
+        time.sleep(2)
+        wait_for_captcha(page)
+        handle_cookies(page, hi)
+
+        # Wypełnianie loginu
+        hi.random_move()
+        hi.type_like_human("input#login", email)
+        hi.move_and_click_like_human("button[type='submit']")
+        time.sleep(2)
+        wait_for_captcha(page)
+
+        # Wypełnianie hasła
+        hi.jitter_mouse()
+        hi.type_like_human("input#password", password)
+        hi.move_and_click_like_human("button[type='submit']")
+        time.sleep(5)
+        wait_for_captcha(page)
+
+        if "allegro.pl" in page.url and "logowanie" not in page.url:
+            logger.info("Logowanie udane!")
+            
+            # Obsługa komunikatu o numerze telefonu - powrót na stronę główną go usuwa
+            logger.info("Powrót na stronę główną (czyszczenie ewentualnych promptów o telefon/weryfikację)...")
+            page.goto("https://allegro.pl", wait_until="load", timeout=30000)
+            time.sleep(random.uniform(2, 4))
+            hi.random_move()
+            
+            return True
+        else:
+            logger.error("Logowanie nieudane (prawdopodobnie dodatkowa weryfikacja).")
+            return False
+    except Exception as e:
+        logger.error(f"Błąd podczas logowania: {e}")
+        return False
+
+def find_cheapest_on_allegro(page, hi, ean):
     if not ean or len(str(ean)) < 8: return None
     
     try:
-        time.sleep(random.uniform(2.0, 4.0))
+        time.sleep(random.uniform(2.0, 5.0))
+        hi.jitter_mouse()
+        
         search_url = f"https://allegro.pl/listing?string={ean}&sort=p&order=p"
         page.goto(search_url, wait_until="load", timeout=45000)
         time.sleep(1.5)
-
-        if is_blocked(page):
-            logger.error("WYKRYTO BLOKADĘ CAPTCHA! Skrypt zostaje wstrzymany.")
-            logger.info("Rozwiąż ręcznie zadanie w otwartym oknie przeglądarki Chrome.")
-            start_wait = time.time()
-            
-            # Pętla czekająca na interwencję użytkownika
-            while is_blocked(page):
-                time.sleep(5)
-                # Maksymalny czas czekania: np. 10 minut
-                if time.time() - start_wait > 600:
-                    raise Exception("Brak rozwiązania Captcha przez 10 minut. Zatrzymuję skrypt.")
-            
-            logger.info("Blokada zniknęła! Wznawiam analizę...")
-            # Odświeżenie na wszelki wypadek
-            page.goto(search_url, wait_until="load", timeout=30000)
-            time.sleep(2)
+        wait_for_captcha(page)
 
         page_text = page.content().lower()
         if "teraz nie mamy dokładnie tego" in page_text or "znaleźliśmy podobne oferty" in page_text or "nie znaleźliśmy ofert dla" in page_text:
             return None 
 
+        # Obsługa wieku
         try:
             age1 = page.get_by_role("button", name="Potwierdź wiek", exact=False).first
             if age1.is_visible(timeout=1000):
-                age1.click()
+                hi.move_and_click_like_human(age1)
                 time.sleep(1)
                 age2 = page.get_by_role("button", name="TAK, MAM 18 LAT", exact=False).first
-                if age2.is_visible(timeout=1000): age2.click()
+                if age2.is_visible(timeout=1000): hi.move_and_click_like_human(age2)
         except: pass
+
+        hi.scroll_like_human()
 
         offers = page.locator("article").all()
         for offer in offers:
@@ -136,7 +175,6 @@ def find_cheapest_on_allegro(page, ean):
                     price_el = offer.locator("span:has-text(' zł')").filter(has_not=page.locator("del")).first
                 
                 if price_el.is_visible():
-                    # Usuwamy wszystkie białe znaki (w tym twarde spacje /xa0 występujące przy tysiącach)
                     raw_text = price_el.inner_text()
                     text = re.sub(r'\s+', '', raw_text).replace(",", ".").replace("zł", "").replace("pln", "").strip()
                     match = re.search(r"(\d+\.\d{2})", text)
@@ -148,191 +186,106 @@ def find_cheapest_on_allegro(page, ean):
         return None
     except Exception as e:
         logger.error(f"Wystąpił błąd podczas szukania EAN {ean}: {e}")
-        raise e
-
-def get_latest_file():
-    files = glob.glob("Analityka/baza_gapli_*.xlsx")
-    if not files: 
         return None
-    # Zwraca najnowszy plik na podstawie czasu modyfikacji/utworzenia
-    return max(files, key=os.path.getctime)
 
 def main():
-    input_file = get_latest_file()
+    input_file = glob.glob("Analityka/baza_gapli_*.xlsx")
     if not input_file:
-        logger.error("Nie znaleziono pliku bazy w folderze Analityka! Najpierw uruchom 1_pobierz_z_gapli.py")
+        logger.error("Nie znaleziono pliku bazy w folderze Analityka!")
         return
+    input_file = max(input_file, key=os.path.getctime)
 
     logger.info(f"Wczytywanie pliku bazy: {input_file}")
-    try:
-        # Wymuszamy wczytanie EAN jako string, żeby uniknąć problemów z formatowaniem
-        df = pd.read_excel(input_file, engine='openpyxl', dtype={'global_unique_id': str, 'ean': str})
-    except Exception as e:
-        logger.error(f"Błąd podczas wczytywania pliku Excel: {e}")
-        return
+    df = pd.read_excel(input_file, engine='openpyxl', dtype={'ean': str, 'global_unique_id': str})
 
-    # Walidacja danych - jeśli kluczowe kolumny są puste, przerywamy, żeby nie nadpisać dobrego pliku zepsutymi danymi
     if df.empty:
         logger.error("Wczytany plik jest pusty.")
         return
         
-    ean_col = 'global_unique_id' if 'global_unique_id' in df.columns else ([c for c in df.columns if 'ean' in c.lower()][0] if any('ean' in c.lower() for c in df.columns) else None)
+    ean_col = 'global_unique_id' if 'global_unique_id' in df.columns else 'ean'
     
-    if not ean_col or df[ean_col].dropna().empty:
-        logger.error(f"BŁĄD KRYTYCZNY: Kolumna EAN ({ean_col}) jest pusta lub jej brakuje! Przerywam, aby chronić dane.")
-        return
-
-    # Upewniamy się, że potrzebne kolumny istnieją i mogą przyjmować tekst
     for col in ['Najtańszy Allegro', 'Różnica', 'Status']:
-        if col not in df.columns:
-            df[col] = ""
+        if col not in df.columns: df[col] = ""
         df[col] = df[col].astype('object')
 
-    # Szukamy, ile zostało nam do zrobienia (gdzie Status jest pusty, NaN lub "nan")
     to_process = df[df['Status'].isna() | (df['Status'] == "") | (df['Status'] == "nan")].index.tolist()
     total = len(df)
     left = len(to_process)
     
     if left == 0:
-        logger.info("Wszystkie pozycje w tym pliku zostały już przeanalizowane.")
+        logger.info("Analiza zakończona.")
         return
 
-    logger.info(f"Wykryto zapisany progres. Do przeanalizowania pozostało {left} z {total} produktów.")
-
-    # Funkcja do bezpiecznego zapisywania (atomic save)
     def safe_save(p_df, p_path):
         temp_path = p_path + ".tmp"
-        try:
-            p_df.to_excel(temp_path, index=False, engine='openpyxl')
-            if os.path.exists(temp_path) and os.path.getsize(temp_path) > 1000: # Prosta weryfikacja czy plik nie jest podejrzanie mały
-                os.replace(temp_path, p_path)
-                return True
-            else:
-                logger.error("Błąd zapisu: Plik tymczasowy jest pusty lub zbyt mały.")
-                return False
-        except Exception as se:
-            logger.error(f"Błąd podczas bezpiecznego zapisywania: {se}")
-            return False
+        p_df.to_excel(temp_path, index=False, engine='openpyxl')
+        os.replace(temp_path, p_path)
 
-    manager = ChromeManager(port=CHROME_DEBUG_PORT)
-    if not manager.start_chrome(): 
-        logger.error("Nie udało się uruchomić przeglądarki Chrome.")
-        return
+    # Inicjalizacja sesji
+    session_count = 0
+    reset_count = 0
+    next_rotation = random.randint(80, 120)
 
-    with sync_playwright() as p:
-        browser = p.chromium.connect_over_cdp(f"http://127.0.0.1:{CHROME_DEBUG_PORT}")
-        context = browser.contexts[0]
-        page = context.pages[0] if context.pages else context.new_page()
-        
-        # Funkcja do ustawiania UA (fizyczny Chrome może ignorować, ale nagłówki pójdą)
-        def set_random_ua(p_page):
-            new_ua = random.choice(USER_AGENTS)
-            logger.info(f"Ustawiam User-Agent: {new_ua}")
-            try:
-                p_page.set_extra_http_headers({"User-Agent": new_ua})
-            except: pass
-            return new_ua
-
-        ua = set_random_ua(page)
-        
-        page.set_viewport_size({"width": 1920, "height": 1080})
-        page.evaluate("document.body.style.zoom='0.6'")
-
-        session_count = 0
-        reset_count = 0
-        # Zmieniamy IP co ok. 100 produktów (od 80 do 120)
-        next_ip_reset = random.randint(80, 120)
-        
-        try:
-            for idx in to_process:
-                row = df.iloc[idx]
-                
-                ean = str(row[ean_col])
-                my_price = row.get('Cena Brutto', 0)
-                sku = row.get('sku', 'N/A')
-                
-                logger.info(f"[{total - left + session_count + 1}/{total}] SKU: {sku} | EAN: {ean}")
-                
-                comp_price = find_cheapest_on_allegro(page, ean)
-                
-                # Zapisanie wyników do DataFrame
-                df.at[idx, 'Najtańszy Allegro'] = comp_price if comp_price else "Brak"
-                
-                if comp_price:
-                    df.at[idx, 'Różnica'] = round(my_price - comp_price, 2)
-                    df.at[idx, 'Status'] = "OK - JESTEŚ TAŃSZY/RÓWNY" if my_price <= comp_price else "DROŻSZY"
-                else:
-                    df.at[idx, 'Różnica'] = ""
-                    df.at[idx, 'Status'] = "BRAK KONKURENCJI"
-
-                logger.info(f"   -> {df.at[idx, 'Status']} (Allegro: {comp_price})")
-                session_count += 1
-                reset_count += 1
-                
-                # Zapisywanie pliku co 10 przeanalizowanych produktów
-                if session_count % 10 == 0:
-                    safe_save(df, input_file)
-                    logger.info(f"Zapisano punkt kontrolny (zrobiono {session_count} sztuk w tej sesji).")
-
-                # Sprawdzenie czy czas na reset IP
-                if reset_count >= next_ip_reset:
-                    logger.info(f"Osiągnięto limit {reset_count} produktów. Rozpoczynam procedurę resetu IP...")
-                    safe_save(df, input_file) # Zapisujemy przed resetem
-                    
-                    success = False
-                    try:
-                        success = reset_modem_ip()
-                    except Exception as re:
-                        logger.error(f"Błąd podczas resetu modemu: {re}")
-                    
-                    if success:
-                        logger.info("IP zostało pomyślnie zmienione. Czekam na powrót połączenia (max 5 minut, sprawdzenie co 2s)...")
-                        
-                        start_wait = time.time()
-                        internet_back = False
-                        while time.time() - start_wait < 300: # 5 minut
-                            if get_public_ip():
-                                internet_back = True
-                                break
-                            time.sleep(2)
-                        
-                        if internet_back:
-                            logger.info(f"Połączenie wznowione po {round(time.time() - start_wait, 1)}s. Kontynuuję...")
-                            time.sleep(1) # Krótka sekunda na stabilizację
-                            set_random_ua(page)
-                        else:
-                            logger.error("Brak internetu po 5 minutach od resetu IP. Zatrzymuję skrypt.")
-                            return
-                    else:
-                        logger.warning("Nie udało się zresetować IP. Próbuję kontynuować mimo to...")
-                    
-                    reset_count = 0
-                    next_ip_reset = random.randint(80, 120)
-                    logger.info(f"Następny reset za ok. {next_ip_reset} produktów.")
-
-        except KeyboardInterrupt:
-            logger.warning("Skrypt przerwany przez użytkownika (Ctrl+C). Progres zostanie zapisany!")
-        except Exception as e:
-            logger.error(f"Wystąpił nieoczekiwany błąd, przerywam: {e}")
-        finally:
-            # TEN BLOK WYKONA SIĘ ZAWSZE - ZAPISUJEMY PROGRES
-            safe_save(df, input_file)
-            logger.info(f"Zapisano aktualny stan do pliku: {input_file}")
+    try:
+        while to_process:
+            profile_name = f"AnalyzeSession_{random.randint(1000, 9999)}"
+            random_port = random.randint(9600, 9800)
+            cm = ChromeManager(port=random_port, profile_name=profile_name)
             
-            # Jeśli udało się dobrnąć do końca, generujemy ładne raporty końcowe
-            if len(df[df['Status'].isna() | (df['Status'] == "")]) == 0:
-                logger.info("ANALIZA W 100% ZAKOŃCZONA!")
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-                
-                full_report = f"Analityka/raport_pelny_{timestamp}.xlsx"
-                safe_save(df, full_report)
-                
-                okazje_report = f"Analityka/raport_OKAZJE_{timestamp}.xlsx"
-                df_okazje = df[df['Status'].isin(["OK - JESTEŚ TAŃSZY/RÓWNY", "BRAK KONKURENCJI"])]
-                safe_save(df_okazje, okazje_report)
-                
-                logger.info(f"Wygenerowano raporty końcowe:\n1. {full_report}\n2. {okazje_report}")
+            if not cm.start_chrome(): break
 
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(f"http://127.0.0.1:{random_port}")
+                context = browser.contexts[0]
+                page = context.pages[0] if context.pages else context.new_page()
+                Stealth().apply_stealth_sync(page)
+                hi = HumanInteraction(page)
+
+                # Rozgrzewka i logowanie
+                logger.info("Nawiguję do allegro.pl (rozgrzewka)...")
+                page.goto("https://allegro.pl", wait_until="load", timeout=60000)
+                time.sleep(2)
+                wait_for_captcha(page)
+                handle_cookies(page, hi)
+                
+                is_logged = login_to_allegro(page, hi)
+
+                # Pętla sesji
+                while reset_count < next_rotation and to_process:
+                    idx = to_process.pop(0)
+                    row = df.iloc[idx]
+                    ean = str(row[ean_col])
+                    my_price = row.get('Cena Brutto', 0)
+                    
+                    logger.info(f"[{total-len(to_process)}/{total}] EAN: {ean}")
+                    comp_price = find_cheapest_on_allegro(page, hi, ean)
+                    
+                    df.at[idx, 'Najtańszy Allegro'] = comp_price if comp_price else "Brak"
+                    if comp_price:
+                        df.at[idx, 'Różnica'] = round(my_price - comp_price, 2)
+                        df.at[idx, 'Status'] = "OK - JESTEŚ TAŃSZY/RÓWNY" if my_price <= comp_price else "DROŻSZY"
+                    else:
+                        df.at[idx, 'Status'] = "BRAK KONKURENCJI"
+
+                    reset_count += 1
+                    session_count += 1
+                    if session_count % 10 == 0: safe_save(df, input_file)
+
+                # Koniec sesji - rotacja tożsamości i IP
+                logger.info("Rotacja sesji i IP...")
+                page.goto(LOGOUT_URL, wait_until="load")
+                time.sleep(3)
+                cm.kill_chrome()
+                
+                reset_modem_ip()
+                reset_count = 0
+                next_rotation = random.randint(80, 120)
+
+    except KeyboardInterrupt:
+        logger.warning("Przerwano.")
+    finally:
+        safe_save(df, input_file)
+        logger.info("Zapisano.")
 
 if __name__ == "__main__":
     main()

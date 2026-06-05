@@ -8,7 +8,7 @@ import re
 import csv
 from datetime import datetime
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth
+from playwright_stealth import Stealth
 
 # Dodanie ścieżki do głównego folderu
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -28,58 +28,7 @@ ACCOUNTS_TO_CREATE = 18
 OUTPUT_CSV = os.path.join("allegro_accounts", "accounts_list.csv")
 CHROME_PORT = 9222
 
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:125.0) Gecko/20100101 Firefox/125.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 OPR/110.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 OPR/109.0.0.0",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (iPad; CPU OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:123.0) Gecko/20100101 Firefox/123.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 OPR/108.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 OPR/107.0.0.0",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 OPR/106.0.0.0",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-    "Mozilla/5.0 (Linux; Android 12; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
-    "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
-]
+# Usunięto przestarzałe USER_AGENTS. Używamy naturalnego UA przeglądarki (v148).
 
 def generate_random_password(length=12):
     """Generuje bezpieczne hasło spełniające wymogi Allegro."""
@@ -147,11 +96,11 @@ def register_single_account(account_index):
     logger.info(f"Dane konta Allegro: Email: {email}, Hasło: {password}")
     
     # 2. Uruchomienie Chrome
-    profile_name = f"chrome-reg-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
-    user_agent = random.choice(USER_AGENTS)
-    logger.info(f"Używam User-Agent: {user_agent}")
+    # Bardziej naturalna nazwa profilu
+    profile_name = f"AllegroUser_{random.randint(1000, 9999)}"
+    random_port = random.randint(9300, 9500)
     
-    cm = ChromeManager(port=CHROME_PORT, profile_name=profile_name, user_agent=user_agent)
+    cm = ChromeManager(port=random_port, profile_name=profile_name)
     if not cm.start_chrome():
         logger.error("Błąd: Nie udało się uruchomić Chrome.")
         return None
@@ -159,27 +108,31 @@ def register_single_account(account_index):
     try:
         with sync_playwright() as p:
             # Połączenie do uruchomionego Chrome
-            browser = p.chromium.connect_over_cdp(f"http://127.0.0.1:{CHROME_PORT}")
+            browser = p.chromium.connect_over_cdp(f"http://127.0.0.1:{random_port}")
             context = browser.contexts[0]
             page = context.pages[0] if context.pages else context.new_page()
             
             # Apply stealth
-            stealth(page)
+            Stealth().apply_stealth_sync(page)
             
             hi = HumanInteraction(page)
             
-            # 3. Nawigacja do rejestracji
-            logger.info("Nawiguję do allegro.pl/rejestracja")
-            time.sleep(random.uniform(1, 3))
-            page.goto("https://allegro.pl/rejestracja", wait_until="load", timeout=60000)
-            time.sleep(3)
+            # 3. Rozgrzewka (Strona główna)
+            logger.info("Nawiguję do allegro.pl (rozgrzewka)...")
+            page.goto("https://allegro.pl", wait_until="load", timeout=60000)
+            time.sleep(random.uniform(2, 4))
+            
+            hi.scroll_like_human()
+            hi.jitter_mouse()
+            hi.random_move()
+            
             wait_for_captcha(page)
             
             # Akceptacja cookies jeśli się pojawi
             logger.info("Sprawdzam zgody GDPR/Cookies...")
             try:
                 # Czekamy chwilę na pojawienie się modala
-                time.sleep(2)
+                time.sleep(random.uniform(2, 4))
                 
                 # Selektory dla przycisków w modalu GDPR
                 consent_selectors = [
@@ -195,14 +148,27 @@ def register_single_account(account_index):
                     btn = page.locator(selector).first
                     if btn.is_visible(timeout=3000):
                         logger.info(f"Klikam przycisk zgody: {selector}")
-                        hi.random_move()
+                        hi.jitter_mouse()
                         hi.move_and_click_like_human(btn)
                         # Czekamy aż modal zniknie
                         page.wait_for_selector("#opbox-gdpr-consents-modal", state="hidden", timeout=5000)
-                        time.sleep(2)
+                        time.sleep(random.uniform(1, 3))
                         break
             except Exception as e:
                 logger.debug(f"Brak lub problem z modalem cookies: {e}")
+
+            hi.scroll_like_human()
+
+            # Nawigacja do rejestracji
+            logger.info("Nawiguję do allegro.pl/rejestracja")
+            time.sleep(random.uniform(3, 7))
+            page.goto("https://allegro.pl/rejestracja", wait_until="load", timeout=60000)
+            time.sleep(random.uniform(4, 8))
+            
+            hi.scroll_like_human()
+            hi.random_move()
+            
+            wait_for_captcha(page)
 
             # Dodatkowy check czy coś jeszcze nie zasłania ekranu
             wait_for_captcha(page)
@@ -212,26 +178,32 @@ def register_single_account(account_index):
             
             # Czekamy aż formularz będzie interaktywny
             page.wait_for_selector("label[for='switchToSignup']", timeout=10000)
-            time.sleep(0.5)
+            time.sleep(random.uniform(1, 2))
+            
+            hi.jitter_mouse()
+            hi.random_move()
 
             # E-mail
-            hi.random_move()
             hi.type_like_human("input#email", email)
+            time.sleep(random.uniform(0.5, 1.5))
             
             # Hasło
-            hi.random_move()
+            hi.jitter_mouse()
             hi.type_like_human("input#password", password)
+            time.sleep(random.uniform(0.5, 1.5))
             
             # Mam 18 lat
+            hi.jitter_mouse()
             hi.move_and_click_like_human("label:has-text('Mam 18 lat lub więcej')")
-            time.sleep(random.uniform(0.5, 1.2))
+            time.sleep(random.uniform(0.8, 2.0))
             
             # Regulamin
             hi.move_and_click_like_human("label:has-text('Oświadczam, że znam i akceptuję postanowienia')")
-            time.sleep(random.uniform(0.5, 1.0))
+            time.sleep(random.uniform(0.8, 1.5))
             
             # Submit
             logger.info("Klikam 'Załóż konto'")
+            hi.jitter_mouse()
             hi.random_move()
             hi.move_and_click_like_human(page.get_by_role("button", name="Załóż konto").first)
             
@@ -400,6 +372,10 @@ def register_single_account(account_index):
 
 def main():
     logger.info(f"Rozpoczynam proces tworzenia {ACCOUNTS_TO_CREATE} kont Allegro.")
+    
+    # Reset IP na samym początku dla bezpieczeństwa
+    logger.info("Resetuję adres IP modemu na start...")
+    reset_modem_ip()
     
     for i in range(ACCOUNTS_TO_CREATE):
         success = register_single_account(i)

@@ -4,6 +4,7 @@ import socket
 import sys
 import time
 import logging
+import random
 
 class ChromeManager:
     """Class for managing Chrome browser instance with remote debugging."""
@@ -54,14 +55,26 @@ class ChromeManager:
         chrome_path = self.get_chrome_path()
         self.logger.info(f"Starting Chrome on port {self.port} with profile: {self.profile_path}")
 
+        # Randomize resolution a bit
+        widths = [1920, 1366, 1536, 1440, 1600]
+        heights = [1080, 768, 864, 900, 900]
+        idx = random.randint(0, len(widths) - 1)
+        res = f"{widths[idx]},{heights[idx]}"
+
         chrome_args = [
             chrome_path,
             f"--remote-debugging-port={self.port}",
             f"--user-data-dir={self.profile_path}",
             "--no-first-run",
             "--no-default-browser-check",
-            "--start-maximized",
-            "--disable-blink-features=AutomationControlled"
+            f"--window-size={res}",
+            "--disable-notifications",
+            "--disable-popup-blocking",
+            "--disable-save-password-bubble",
+            "--disable-infobars",
+            "--lang=pl-PL",
+            "--disable-features=WebRtcHideLocalIpsWithMdns",
+            "--force-color-profile=srgb"
         ]
 
         if self.user_agent:

@@ -86,6 +86,37 @@ class HumanInteraction:
             self.page.mouse.move(curr_x, curr_y)
             time.sleep(random.uniform(0.005, 0.015))
 
+    def scroll_like_human(self):
+        """Perform some random scrolls."""
+        try:
+            steps = random.randint(2, 5)
+            for _ in range(steps):
+                amount = random.randint(200, 600)
+                if random.random() > 0.5:
+                    amount = -amount # Scroll up sometimes
+                
+                # Perform the scroll in small increments
+                increments = 10
+                for _ in range(increments):
+                    self.page.mouse.wheel(0, amount / increments)
+                    time.sleep(random.uniform(0.05, 0.15))
+                
+                time.sleep(random.uniform(0.5, 1.5))
+        except Exception as e:
+            self.logger.error(f"Error during scrolling: {e}")
+
+    def jitter_mouse(self):
+        """Perform minor mouse movements to simulate a shaky hand."""
+        try:
+            for _ in range(random.randint(3, 7)):
+                nx = self.last_x + random.uniform(-3, 3)
+                ny = self.last_y + random.uniform(-3, 3)
+                self.page.mouse.move(nx, ny)
+                self.last_x, self.last_y = nx, ny
+                time.sleep(random.uniform(0.01, 0.05))
+        except Exception as e:
+            self.logger.error(f"Error during jitter: {e}")
+
     def _bezier_curve(self, p0, p1, p2, p3, t):
         """Calculates point on a Bezier curve."""
         return (
