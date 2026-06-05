@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Parametry
-ACCOUNTS_TO_CREATE = 20
+ACCOUNTS_TO_CREATE = 18
 OUTPUT_CSV = os.path.join("allegro_accounts", "accounts_list.csv")
 CHROME_PORT = 9222
 
