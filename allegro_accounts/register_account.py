@@ -8,7 +8,7 @@ import re
 import csv
 from datetime import datetime
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
+from playwright_stealth import stealth
 
 # Dodanie ścieżki do głównego folderu
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -164,7 +164,7 @@ def register_single_account(account_index):
             page = context.pages[0] if context.pages else context.new_page()
             
             # Apply stealth
-            stealth_sync(page)
+            stealth(page)
             
             hi = HumanInteraction(page)
             
