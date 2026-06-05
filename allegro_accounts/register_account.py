@@ -8,6 +8,7 @@ import re
 import csv
 from datetime import datetime
 from playwright.sync_api import sync_playwright
+from playwright_stealth import stealth_sync
 
 # Dodanie ścieżki do głównego folderu
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -98,7 +99,15 @@ def is_blocked(page):
             if "allegrocaptcha.com" in frame.url or "captcha-delivery.com" in frame.url:
                 has_iframe = True
                 break
-        indicators = ["nietypowy ruch", "pokaż, że jesteś człowiekiem", "potwierdź, że jesteś człowiekiem", "sprawdź czy nie jesteś robotem", "udowodnij, że nie jesteś robotem"]
+        indicators = [
+            "nietypowy ruch", 
+            "pokaż, że jesteś człowiekiem", 
+            "potwierdź, że jesteś człowiekiem", 
+            "sprawdź czy nie jesteś robotem", 
+            "udowodnij, że nie jesteś robotem",
+            "zostałeś zablokowany",
+            "something in your behavior has caught our attention"
+        ]
         return any(x in content for x in indicators) or page.locator("iframe[title*='reCAPTCHA']").is_visible() or has_iframe
     except:
         return False
@@ -154,10 +163,14 @@ def register_single_account(account_index):
             context = browser.contexts[0]
             page = context.pages[0] if context.pages else context.new_page()
             
+            # Apply stealth
+            stealth_sync(page)
+            
             hi = HumanInteraction(page)
             
             # 3. Nawigacja do rejestracji
             logger.info("Nawiguję do allegro.pl/rejestracja")
+            time.sleep(random.uniform(1, 3))
             page.goto("https://allegro.pl/rejestracja", wait_until="load", timeout=60000)
             time.sleep(3)
             wait_for_captcha(page)
@@ -182,7 +195,8 @@ def register_single_account(account_index):
                     btn = page.locator(selector).first
                     if btn.is_visible(timeout=3000):
                         logger.info(f"Klikam przycisk zgody: {selector}")
-                        btn.click()
+                        hi.random_move()
+                        hi.move_and_click_like_human(btn)
                         # Czekamy aż modal zniknie
                         page.wait_for_selector("#opbox-gdpr-consents-modal", state="hidden", timeout=5000)
                         time.sleep(2)
@@ -201,22 +215,25 @@ def register_single_account(account_index):
             time.sleep(0.5)
 
             # E-mail
+            hi.random_move()
             hi.type_like_human("input#email", email)
             
             # Hasło
+            hi.random_move()
             hi.type_like_human("input#password", password)
             
             # Mam 18 lat
-            page.locator("label:has-text('Mam 18 lat lub więcej')").click()
+            hi.move_and_click_like_human("label:has-text('Mam 18 lat lub więcej')")
             time.sleep(random.uniform(0.5, 1.2))
             
             # Regulamin
-            page.locator("label:has-text('Oświadczam, że znam i akceptuję postanowienia')").click()
+            hi.move_and_click_like_human("label:has-text('Oświadczam, że znam i akceptuję postanowienia')")
             time.sleep(random.uniform(0.5, 1.0))
             
             # Submit
             logger.info("Klikam 'Załóż konto'")
-            page.get_by_role("button", name="Załóż konto").first.click()
+            hi.random_move()
+            hi.move_and_click_like_human(page.get_by_role("button", name="Załóż konto").first)
             
             time.sleep(5)
             page.screenshot(path="debug_after_register_click.png")
@@ -286,7 +303,8 @@ def register_single_account(account_index):
                     btn = page.locator(selector).first
                     if btn.is_visible(timeout=3000):
                         logger.info(f"Klikam przycisk zgody: {selector}")
-                        btn.click()
+                        hi.random_move()
+                        hi.move_and_click_like_human(btn)
                         # Czekamy aż modal zniknie
                         page.wait_for_selector("#opbox-gdpr-consents-modal", state="hidden", timeout=5000)
                         time.sleep(2)
@@ -310,7 +328,8 @@ def register_single_account(account_index):
                             btn = frame.get_by_text(re.compile("WYJD", re.I)).first
                             if btn.is_visible(timeout=500):
                                 logger.info(f"Znaleziono 'WYJDŹ' w ramce: {frame.url or 'main'}")
-                                btn.click()
+                                hi.random_move()
+                                hi.move_and_click_like_human(btn)
                                 found = True
                                 break
                         except:
@@ -336,8 +355,9 @@ def register_single_account(account_index):
                         try:
                             btn = frame.get_by_text(re.compile("WYCHODZ", re.I)).first
                             if btn.is_visible(timeout=500):
-                                logger.info(f"Znaleziono 'WYCHODZĘ' w ramce: {frame.url or 'main'}")
-                                btn.click()
+                                logger.info(f"Znaleziono 'WYCHODZĘ' in ramce: {frame.url or 'main'}")
+                                hi.random_move()
+                                hi.move_and_click_like_human(btn)
                                 found = True
                                 break
                         except:

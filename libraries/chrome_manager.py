@@ -60,7 +60,8 @@ class ChromeManager:
             f"--user-data-dir={self.profile_path}",
             "--no-first-run",
             "--no-default-browser-check",
-            "--start-maximized"
+            "--start-maximized",
+            "--disable-blink-features=AutomationControlled"
         ]
 
         if self.user_agent:
