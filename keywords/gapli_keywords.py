@@ -7,7 +7,9 @@ from libraries.excel_reader import ExcelReader
 
 def start_browser_and_login(username, password):
     """Starts Chrome and logs into Gapli."""
-    chrome = ChromeManager()
+    # Standard User Agent to avoid detection
+    # ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    chrome = ChromeManager()#user_agent=ua
     if not chrome.start_chrome():
         return None, None, None
 
